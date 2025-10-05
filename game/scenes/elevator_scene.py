@@ -196,6 +196,10 @@ class ElevatorScene:
         # Check if we're at the roof (floor 17)
         if current >= 17:
             print(f"Can't go up - already at roof (Floor {current})")
+        elif current == 0:
+            # Skip floor 1 (doesn't exist) - go from 0 to 2
+            print(f"Moving up from floor {current} to floor 2 (skipping 1)")
+            self.elevator.move_to_floor(2)
         elif current == 12:
             # Skip floor 13 (doesn't exist)
             print(f"Moving up from floor {current} to floor 14 (skipping 13)")
@@ -205,14 +209,23 @@ class ElevatorScene:
         elif self.elevator.doors_open:
             print("Can't move - close the doors first! (Press E)")
         else:
-            print(f"Moving up from floor {current} to {current + 1}")
-            self.elevator.move_to_floor(current + 1)
+            # Check if next floor exists
+            next_floor = current + 1
+            if next_floor not in FLOORS:
+                print(f"ERROR: Floor {next_floor} doesn't exist!")
+            else:
+                print(f"Moving up from floor {current} to {next_floor}")
+                self.elevator.move_to_floor(next_floor)
             
     def _move_elevator_down(self):
         """Move elevator down one floor."""
         current = self.elevator.current_floor
         if current <= -1:
             print(f"Can't go down - already at basement (Floor {current})")
+        elif current == 2:
+            # Skip floor 1 (doesn't exist) when going down - go from 2 to 0
+            print(f"Moving down from floor {current} to floor 0 (skipping 1)")
+            self.elevator.move_to_floor(0)
         elif current == 14:
             # Skip floor 13 (doesn't exist) when going down
             print(f"Moving down from floor {current} to floor 12 (skipping 13)")
@@ -222,8 +235,13 @@ class ElevatorScene:
         elif self.elevator.doors_open:
             print("Can't move - close the doors first! (Press E)")
         else:
-            print(f"Moving down from floor {current} to {current - 1}")
-            self.elevator.move_to_floor(current - 1)
+            # Check if previous floor exists
+            prev_floor = current - 1
+            if prev_floor not in FLOORS:
+                print(f"ERROR: Floor {prev_floor} doesn't exist!")
+            else:
+                print(f"Moving down from floor {current} to {prev_floor}")
+                self.elevator.move_to_floor(prev_floor)
             
     def _update_npcs(self, dt):
         """Update all NPCs."""
