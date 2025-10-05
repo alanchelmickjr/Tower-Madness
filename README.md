@@ -308,6 +308,29 @@ cp .env.example .env.local
 python main.py
 ```
 
+#### 🌐 Web Deployment (Play in Browser!)
+
+```bash
+# Install pygbag for web deployment
+pip install pygbag
+
+# Use the build script to prepare for web
+python build_web.py
+
+# Or manually build for web:
+cd web_build
+python -m pygbag .
+
+# Open in browser:
+# http://localhost:8000
+```
+
+The game can be deployed to:
+- GitHub Pages
+- Netlify
+- Vercel
+- Any static web hosting service
+
 #### Controls
 - **↑/W**: Move elevator up
 - **↓/S**: Move elevator down
