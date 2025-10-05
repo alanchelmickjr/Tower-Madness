@@ -298,16 +298,22 @@ class Floor:
         
         # Draw special floor indicators
         if self.is_good_robot_lab:
-            # Draw "GOOD" indicator
+            # Draw "GOOD" indicator with background for readability
             good_font = pygame.font.Font(None, 32)
-            good_text = good_font.render("♥ GOOD ROBOTS ♥", True, CYAN)
+            good_text = good_font.render("♥ GOOD ROBOTS ♥", True, WHITE)
             good_rect = good_text.get_rect(center=(SCREEN_WIDTH // 2, self.y - 20))
+            
+            # Draw dark background box for text contrast
+            bg_rect = good_rect.inflate(20, 10)
+            pygame.draw.rect(screen, (0, 0, 0, 200), bg_rect)
+            pygame.draw.rect(screen, CYAN, bg_rect, 2)  # Cyan border
+            
             screen.blit(good_text, good_rect)
             
-            # Draw protective barrier effect
+            # Draw protective barrier effect (semi-transparent, below text)
             barrier_rect = pygame.Rect(0, self.y - 40, SCREEN_WIDTH, 50)
             barrier_surface = pygame.Surface((SCREEN_WIDTH, 50))
-            barrier_surface.set_alpha(int(50 * self.glow_intensity))
+            barrier_surface.set_alpha(int(30 * self.glow_intensity))  # More subtle
             barrier_surface.fill(CYAN)
             screen.blit(barrier_surface, barrier_rect)
             
