@@ -1,16 +1,19 @@
 """
 Tower Madness / Elevator Operator
 Main game entry point for SF Tech Week Algorave
-Arcade cabinet ready with 2-player support
+Web-compatible with Pygbag async support
 """
 
 import pygame
 import sys
+import asyncio
 from game.core.engine import GameEngine
 from game.core.constants import SCREEN_WIDTH, SCREEN_HEIGHT, TITLE, FPS
 
-def main():
-    """Main entry point for Tower Madness game."""
+async def main():
+    """Async main entry point for web deployment with Pygbag."""
+    print("Tower Madness starting...")
+    
     pygame.init()
     pygame.mixer.init()
     
@@ -19,8 +22,11 @@ def main():
     pygame.display.set_caption(TITLE)
     clock = pygame.time.Clock()
     
+    print(f"Display initialized: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+    
     # Create game engine
     engine = GameEngine(screen, clock)
+    print("Game engine created, starting main loop...")
     
     # Main game loop
     running = True
@@ -41,9 +47,13 @@ def main():
         engine.draw()
         
         pygame.display.flip()
+        
+        # Yield control for web browser - this is critical for Pygbag
+        await asyncio.sleep(0)
     
     pygame.quit()
-    sys.exit()
+    print("Tower Madness ended")
 
+# Entry point for Pygbag
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

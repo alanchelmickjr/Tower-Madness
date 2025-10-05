@@ -440,6 +440,10 @@ class ElevatorScene:
                         if npc.enter_elevator(self.elevator):
                             floor.remove_waiting_npc(npc)
                             
+                            # Special: Xeno resolves all disasters when picked up!
+                            if hasattr(npc, 'name') and npc.name == "Xeno":
+                                self._xeno_resolves_all()
+                            
     def _score_delivery(self, npc, floor_num):
         """Score points for delivering NPCs."""
         base_score = 10
@@ -493,6 +497,53 @@ class ElevatorScene:
             
         self.score += base_score
         self.passengers_delivered += 1
+        
+    def _xeno_resolves_all(self):
+        """Xeno's special power - resolves all disasters and removes bad robots."""
+        print("🌟 XENO PICKED UP! Resolving all disasters! 🌟")
+        
+        # End flood disaster
+        if self.flood_disaster.active:
+            self.flood_disaster.active = False
+            self.flood_disaster.water_level = 0
+            self.flood_disaster.timer = 0
+            print("Flood resolved by Xeno's presence!")
+            
+        # End hackathon event
+        if self.hackathon_event.active:
+            self.hackathon_event.active = False
+            self.hackathon_event.timer = 0
+            print("Hackathon peacefully concluded by Xeno!")
+            
+        # Remove all evil/bad robots
+        for npc in self.npcs[:]:
+            if npc.npc_type == "evil" or (hasattr(npc, 'name') and "Escaped" in npc.name):
+                # Remove from floors
+                if npc.current_floor in self.floors:
+                    floor = self.floors[npc.current_floor]
+                    if npc in floor.waiting_npcs:
+                        floor.remove_waiting_npc(npc)
+                # Remove from NPCs list
+                if npc in self.npcs:
+                    self.npcs.remove(npc)
+                    
+        # Clear escaped bad robots list
+        self.escaped_bad_robots.clear()
+        
+        # Reset chaos level
+        self.chaos_level = 0
+        
+        # Boost harmony
+        self.harmony_level = min(100, self.harmony_level + 50)
+        
+        # Visual celebration
+        self.flash_color = GOLD
+        self.flash_timer = 1.0
+        self.screen_shake = 5
+        
+        # Bonus score
+        self.score += 100
+        print("Xeno brings peace! +100 bonus points!")
         
     def _update_game_balance(self, dt):
         """Update game balance between chaos and harmony."""

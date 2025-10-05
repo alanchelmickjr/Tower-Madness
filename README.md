@@ -1,6 +1,14 @@
 # 🏢 Tower Madness: Elevator Operator Simulator
 
-## 🎮 [PLAY NOW IN YOUR BROWSER!](https://alanchelmickjr.github.io/Tower-Madness/)
+## 🎮 ONE-CLICK PLAY OPTIONS 🎮
+
+### 🚀 [PLAY NOW - No Download Required!](https://github.dev/alanchelmickjr/Tower-Madness)
+**↑ Click above, press `.` on GitHub, then run `python main.py` in terminal ↑**
+
+### Alternative Play Options:
+1. **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=alanchelmickjr/Tower-Madness)** - Free, no account needed!
+2. **[Try Web Version](https://alanchelmickjr.github.io/Tower-Madness/)** - Currently being fixed
+3. **Download & Run**: `pip install pygame && python main.py`
 
 ## 🚨 LIVE at Frontier Tower Retro Arcade Hackathon! 🚨
 **Built during the Retro Arcade Hackathon at Frontier Tower, Floor 2 - The same floor that gets flooded in the game!**
