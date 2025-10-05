@@ -157,7 +157,7 @@ tower-madness/
 **Key Narrative Elements:**
 - John the doorman is actually an android
 - The basement hosts a secret robot fight club
-- Floor 7 robotics engineers hear the roof rave while building
+- Floor 4 robotics engineers hear the roof rave while building
 - APEX-7 (lead robot) is secretly the roof rave DJ
 - Three different endings based on your choices
 - New Game+ reveals "the real game"
