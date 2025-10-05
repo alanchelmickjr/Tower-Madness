@@ -83,6 +83,11 @@ class ElevatorScene:
         # General timer for animations
         self.timer = 0
         
+        # Debug disaster buttons (for demo/testing)
+        self.debug_mode = True  # Enable for demos
+        self.flood_button = pygame.Rect(SCREEN_WIDTH - 120, 90, 100, 35)
+        self.hackathon_button = pygame.Rect(SCREEN_WIDTH - 120, 135, 100, 35)
+        
     def update(self, dt, events):
         """Update the scene.
         
@@ -196,6 +201,18 @@ class ElevatorScene:
                         self._move_elevator_down()
                     elif event.key == PLAYER2_CONTROLS["open_doors"]:
                         self.elevator.toggle_doors()
+                        
+            # Mouse clicks for debug buttons
+            elif event.type == pygame.MOUSEBUTTONDOWN and self.debug_mode:
+                mouse_pos = event.pos
+                if self.flood_button.collidepoint(mouse_pos):
+                    if not self.flood_disaster.active:
+                        self.flood_disaster.trigger_flood()
+                        print("🌊 FLOOD triggered via debug button!")
+                elif self.hackathon_button.collidepoint(mouse_pos):
+                    if not self.hackathon_event.active:
+                        self.hackathon_event.trigger_hackathon()
+                        print("💻 HACKATHON triggered via debug button!")
                         
     def _move_elevator_up(self):
         """Move elevator up one floor."""
@@ -808,6 +825,30 @@ class ElevatorScene:
                 waiting_text = font_small.render(f"{floor_name}: {count}", True, WHITE)
                 screen.blit(waiting_text, (SCREEN_WIDTH - 170, y_pos))
                 y_pos += 18
+       
+       # Draw debug disaster trigger buttons (for demo/testing)
+       if self.debug_mode:
+           font_small = pygame.font.Font(None, 18)
+           
+           # Flood button
+           flood_color = RED if self.flood_disaster.active else (100, 150, 200)
+           pygame.draw.rect(screen, BLACK, self.flood_button)
+           pygame.draw.rect(screen, flood_color, self.flood_button, 2)
+           flood_text = font_small.render("🌊 FLOOD", True, flood_color)
+           flood_rect = flood_text.get_rect(center=self.flood_button.center)
+           screen.blit(flood_text, flood_rect)
+           
+           # Hackathon button
+           hack_color = ORANGE if self.hackathon_event.active else (200, 150, 100)
+           pygame.draw.rect(screen, BLACK, self.hackathon_button)
+           pygame.draw.rect(screen, hack_color, self.hackathon_button, 2)
+           hack_text = font_small.render("💻 HACK", True, hack_color)
+           hack_rect = hack_text.get_rect(center=self.hackathon_button.center)
+           screen.blit(hack_text, hack_rect)
+           
+           # Debug label
+           debug_label = font_small.render("DEMO TRIGGERS:", True, GRAY)
+           screen.blit(debug_label, (SCREEN_WIDTH - 120, 70))
             
         # Hackathon indicator with timer
         if self.hackathon_event.active:
