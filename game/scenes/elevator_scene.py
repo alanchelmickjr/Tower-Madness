@@ -822,12 +822,12 @@ class ElevatorScene:
                 elif floor == 17:
                     floor_name = "Roof"
                     
-               waiting_text = font_small.render(f"{floor_name}: {count}", True, WHITE)
-               screen.blit(waiting_text, (SCREEN_WIDTH - 170, y_pos))
-               y_pos += 18
-       
-       # Draw debug disaster trigger buttons (for demo/testing)
-       if self.debug_mode:
+                waiting_text = font_small.render(f"{floor_name}: {count}", True, WHITE)
+                screen.blit(waiting_text, (SCREEN_WIDTH - 170, y_pos))
+                y_pos += 18
+        
+        # Draw debug disaster trigger buttons (for demo/testing)
+        if self.debug_mode:
             font_small = pygame.font.Font(None, 18)
             
             # Flood button
