@@ -211,7 +211,7 @@ class ElevatorScene:
                         print("🌊 FLOOD triggered via debug button!")
                 elif self.hackathon_button.collidepoint(mouse_pos):
                     if not self.hackathon_event.active:
-                        self.hackathon_event.trigger_hackathon()
+                        self.hackathon_event.trigger()
                         print("💻 HACKATHON triggered via debug button!")
                         
     def _move_elevator_up(self):
