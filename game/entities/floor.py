@@ -298,24 +298,24 @@ class Floor:
         
         # Draw special floor indicators
         if self.is_good_robot_lab:
-            # Draw "GOOD" indicator with background for readability
-            good_font = pygame.font.Font(None, 32)
-            good_text = good_font.render("♥ GOOD ROBOTS ♥", True, WHITE)
-            good_rect = good_text.get_rect(center=(SCREEN_WIDTH // 2, self.y - 20))
-            
-            # Draw dark background box for text contrast
-            bg_rect = good_rect.inflate(20, 10)
-            pygame.draw.rect(screen, (0, 0, 0, 200), bg_rect)
-            pygame.draw.rect(screen, CYAN, bg_rect, 2)  # Cyan border
-            
-            screen.blit(good_text, good_rect)
-            
-            # Draw protective barrier effect (semi-transparent, below text)
+            # Draw protective barrier effect FIRST (so text goes on top)
             barrier_rect = pygame.Rect(0, self.y - 40, SCREEN_WIDTH, 50)
             barrier_surface = pygame.Surface((SCREEN_WIDTH, 50))
-            barrier_surface.set_alpha(int(30 * self.glow_intensity))  # More subtle
+            barrier_surface.set_alpha(int(20 * self.glow_intensity))  # Very subtle
             barrier_surface.fill(CYAN)
             screen.blit(barrier_surface, barrier_rect)
+            
+            # Draw "GOOD" indicator with HIGH CONTRAST
+            good_font = pygame.font.Font(None, 36)  # Larger font
+            good_text = good_font.render("♥ GOOD ROBOTS ♥", True, YELLOW)  # YELLOW for max contrast
+            good_rect = good_text.get_rect(center=(SCREEN_WIDTH // 2, self.y - 20))
+            
+            # Draw solid black background box
+            bg_rect = good_rect.inflate(30, 15)
+            pygame.draw.rect(screen, BLACK, bg_rect)
+            pygame.draw.rect(screen, CYAN, bg_rect, 3)  # Thicker cyan border
+            
+            screen.blit(good_text, good_rect)
             
         elif self.is_evil_fight_club:
             # Draw "EVIL" indicator with warning

@@ -66,8 +66,8 @@ class FloodDisaster:
             npcs: List of NPCs in the game
         """
         if not self.active:
-            # Random chance to trigger flood (reduced frequency)
-            if random.random() < 0.00003:  # Even more rare - about 1/3 as often
+            # Random chance to trigger flood (balanced frequency)
+            if random.random() < 0.0002:  # More frequent but not overwhelming
                 self.trigger_flood()
             return
             

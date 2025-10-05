@@ -116,9 +116,9 @@ class ElevatorScene:
         self.hackathon_event.update(dt, self.elevator, self.npcs, self.floors)
         self.flood_disaster.update(dt, self.elevator, self.npcs)
         
-        # Trigger disasters based on chaos level (reduced frequency)
+        # Trigger disasters based on chaos level (balanced frequency)
         if self.chaos_level > 50 and not self.flood_disaster.active:
-            if random.random() < 0.0003 * (self.chaos_level / 100):  # 1/3 as frequent
+            if random.random() < 0.002 * (self.chaos_level / 100):  # 2x original for more action
                 self.flood_disaster.trigger_flood()
         
         # Hackathon causes Floor 2 jamming
