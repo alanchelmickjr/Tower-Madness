@@ -15,8 +15,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,15 +34,57 @@ jobs:
           python -m pip install --upgrade pip
           pip install pygbag
           
-      - name: Build web version
+      - name: Prepare and Build Web Version
         run: |
-          mkdir -p web_build
-          cp -r game web_build/
-          cp main.py web_build/
-          cp config.py web_build/
-          echo "# Pygame web build" > web_build/README.md
-          cd web_build
-          python -m pygbag --build .
+          # Create a simple index.html
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Tower Madness - Elevator Operator</title>
+              <meta charset="utf-8">
+              <style>
+                  body {
+                      margin: 0;
+                      padding: 0;
+                      background: #000;
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      min-height: 100vh;
+                      flex-direction: column;
+                      font-family: Arial, sans-serif;
+                  }
+                  #status {
+                      color: #0ff;
+                      margin: 20px;
+                      font-size: 24px;
+                  }
+                  canvas {
+                      border: 2px solid #0ff;
+                  }
+                  .controls {
+                      color: #fff;
+                      margin: 20px;
+                      text-align: center;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1 style="color: #0ff;">🏢 Tower Madness: Elevator Operator 🏢</h1>
+              <div id="status">Loading game...</div>
+              <canvas id="canvas"></canvas>
+              <div class="controls">
+                  <p>W/↑: Up | S/↓: Down | E/Space: Doors</p>
+                  <p>Goal: Deliver 20 passengers!</p>
+              </div>
+              <script src="pythons.js" type="module"></script>
+          </body>
+          </html>
+          EOF
+          
+          # Build with pygbag
+          python -m pygbag --build . --ume_block 0
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -47,15 +92,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'web_build/build/web'
+          path: 'build/web'
           
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
