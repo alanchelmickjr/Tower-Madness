@@ -124,7 +124,7 @@
             <p>🎯 <strong>Your Mission:</strong> Deliver 20 passengers to their destinations before chaos erupts!</p>
         </div>
         
-        <div id="loading" class="loading">⏳ Loading game... Please wait...</div>
+        <div id="loading" class="loading">⏳ Loading game... When loaded, press the SPACEBAR key on your keyboard!</div>
         <div id="error-message" class="error" style="display: none;"></div>
         
         <canvas id="pygame-canvas"></canvas>
@@ -154,9 +154,29 @@
                 // Load Pygbag/Pyodide
                 loadingDiv.textContent = '📦 Loading Python environment...';
                 
-                // This is where Pygbag will inject the game
-                // The actual loading is handled by pygbag build system
-                loadingDiv.textContent = '🎮 Press START when ready!';
+                // Auto-focus the canvas when it appears
+                const observer = new MutationObserver(() => {
+                    if (canvas && canvas.width > 0) {
+                        canvas.focus();
+                        canvas.setAttribute('tabindex', '0');
+                        canvas.style.outline = '3px solid #0ff';
+                        loadingDiv.textContent = '🎮 Click the game screen, then press SPACEBAR to start!';
+                        console.log('Canvas ready - click it and press SPACEBAR');
+                    }
+                });
+                
+                observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] });
+                
+                // Also try to focus on click
+                canvas.addEventListener('click', () => {
+                    canvas.focus();
+                    console.log('Canvas focused - try pressing SPACEBAR now');
+                });
+                
+                // Log keyboard events for debugging
+                canvas.addEventListener('keydown', (e) => {
+                    console.log('Key pressed:', e.key, e.code);
+                });
                 
             } catch (error) {
                 console.error('Error loading game:', error);

@@ -17,15 +17,18 @@ pygbag main_web.py
 
 1. ⏳ **Wait 10-20 seconds** - Python loads in browser (first time only)
 2. 🎯 **See "TOWER MADNESS" title** - Game is ready!
-3. ⌨️ **Press SPACE** - Start playing!
+3. 🖱️ **CLICK on the game screen first!** (gives it keyboard focus)
+4. ⌨️ **NOW press SPACEBAR** - Start playing!
+
+**⚠️ CRITICAL: You MUST click on the game canvas first, then press SPACEBAR!**
 
 ---
 
 ## Controls:
-- **SPACE** = Start game / Open doors
-- **W** or **↑** = Go UP
-- **S** or **↓** = Go DOWN
-- **E** = Open/Close doors
+- **SPACEBAR** = Start game / Open doors
+- **W** or **↑ Arrow** = Go UP
+- **S** or **↓ Arrow** = Go DOWN
+- **E** or **SPACEBAR** = Open/Close doors
 
 ---
 

@@ -25,11 +25,20 @@ pygbag main_web.py
 1. **Loading screen** - Python is loading in your browser (be patient!)
 2. **"TOWER MADNESS" title** - Main menu appears
 3. **"Press SPACE to Start"** - Game is ready!
-4. **Elevator gameplay** - Use W/S to move, E to open doors
+4. **⚠️ IMPORTANT: Click anywhere on the game screen first!** (This gives it keyboard focus)
+5. **Now press SPACEBAR** - The game will start!
+6. **Elevator gameplay** - Use W/S to move, E to open doors
 
 ---
 
 ## Troubleshooting
+
+### "Pressed SPACE but nothing happens"
+**Solution:** Click on the game canvas/screen first! The browser needs you to click the game window to give it keyboard focus.
+
+1. Click anywhere on the dark game screen
+2. Then press SPACEBAR
+3. Game should start!
 
 ### "Still see black screen"
 - Wait 20-30 seconds (Python loading takes time)
