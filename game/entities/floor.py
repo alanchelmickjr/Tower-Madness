@@ -290,13 +290,7 @@ class Floor:
                                (particle['x'] - 3, particle['y']),
                                (particle['x'] + 3, particle['y']), 2)
                 
-        # Draw floor label
-        font = pygame.font.Font(None, 24)
-        label = font.render(self.floor_data["name"], True, WHITE)
-        label_rect = label.get_rect(midleft=(20, self.y - 15))
-        screen.blit(label, label_rect)
-        
-        # Draw special floor indicators
+        # Draw special floor indicators FIRST (so regular label draws on top if needed)
         if self.is_good_robot_lab:
             # Draw protective barrier effect FIRST (so text goes on top)
             barrier_rect = pygame.Rect(0, self.y - 40, SCREEN_WIDTH, 50)
@@ -316,8 +310,15 @@ class Floor:
             pygame.draw.rect(screen, CYAN, bg_rect, 3)  # Thicker cyan border
             
             screen.blit(good_text, good_rect)
+        
+        # Draw floor label (after special indicators)
+        font = pygame.font.Font(None, 24)
+        label = font.render(self.floor_data["name"], True, WHITE)
+        label_rect = label.get_rect(midleft=(20, self.y - 15))
+        screen.blit(label, label_rect)
             
-        elif self.is_evil_fight_club:
+        # Draw other special floor indicators
+        if self.is_evil_fight_club:
             # Draw "EVIL" indicator with warning
             evil_font = pygame.font.Font(None, 32)
             evil_text = evil_font.render("⚠ ROBOT FIGHT CLUB ⚠", True, RED)
