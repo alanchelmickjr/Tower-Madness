@@ -64,18 +64,11 @@ FLOORS = {
         "ambient_color": (100, 0, 0)
     },
     0: {
-        "name": "Street Level",
-        "description": "Ground floor entrance with John the doorman",
+        "name": "Street Level - Lobby",
+        "description": "Ground floor entrance and lobby with John the doorman",
         "theme": "neutral",
         "color": GRAY,
         "ambient_color": (150, 150, 150)
-    },
-    1: {
-        "name": "Floor 1 - Lobby",
-        "description": "Main lobby and reception area",
-        "theme": "neutral",
-        "color": LIGHT_GRAY,
-        "ambient_color": (180, 180, 180)
     },
     2: {
         "name": "Floor 2 - The Spaceship",

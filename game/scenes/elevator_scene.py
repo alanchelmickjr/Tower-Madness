@@ -9,6 +9,10 @@ from game.core.constants import *
 from game.entities.elevator import Elevator
 from game.entities.floor import Floor
 from game.entities.npc import NPC, GoodRobot, EvilRobot
+from game.entities.special_npcs import create_special_npc
+from game.events.disasters import FloodDisaster
+from game.events.hackathon import HackathonEvent
+from game.core.ai_sprite_generator import get_sprite_generator
 
 class ElevatorScene:
     """Main gameplay scene managing elevator operations."""
@@ -42,8 +46,10 @@ class ElevatorScene:
             
         # NPCs
         self.npcs = []
-        self.spawn_timer = 2.0  # Start spawning after 2 seconds
+        self.spawn_timer = 1.0  # Start spawning after 1 second
         self.spawn_interval = NPC_SPAWN_RATE
+        self.special_npc_timer = 3.0  # Spawn special NPCs regularly
+        self.sprite_generator = get_sprite_generator()
         
         # Game state
         self.score = 0
@@ -52,11 +58,13 @@ class ElevatorScene:
         self.harmony_level = 0  # Increases with good robot activity
         
         # Special characters
-        self.john_the_doorman = None
-        self.spawn_john_timer = 5.0  # John appears after 5 seconds
-        self.alan_the_mastermind = None
-        self.spawn_alan_timer = 10.0  # Alan appears after 10 seconds
+        self.special_npcs = {}
+        self.spawn_special_timer = 2.0  # Start spawning specials after 2 seconds
         self.escaped_bad_robots = []  # Track bad robots escaping from basement
+        
+        # Events and disasters
+        self.flood_disaster = FloodDisaster()
+        self.hackathon_event = HackathonEvent()
         
         # Visual effects
         self.screen_shake = 0
@@ -94,10 +102,23 @@ class ElevatorScene:
         # Spawn new NPCs
         self._spawn_npcs(dt)
         
-        # Check for special NPCs
-        self._update_john(dt)
-        self._update_alan(dt)
-        self._update_escaped_robots(dt)
+        # Spawn special NPCs
+        self._spawn_special_npcs(dt)
+        
+        # Update events
+        self.hackathon_event.update(dt, self.elevator, self.npcs, self.floors)
+        self.flood_disaster.update(dt, self.elevator, self.npcs)
+        
+        # Trigger disasters based on chaos level
+        if self.chaos_level > 50 and not self.flood_disaster.active:
+            if random.random() < 0.001 * (self.chaos_level / 100):
+                self.flood_disaster.trigger_flood()
+        
+        # Hackathon causes Floor 2 jamming
+        if self.hackathon_event.check_elevator_at_floor_2(self.elevator):
+            # Spawn extra NPCs going to street level
+            if random.random() < 0.3:
+                self._spawn_hackathon_jammer()
         
         # Handle elevator arrivals
         self._handle_elevator_arrivals()
@@ -230,32 +251,43 @@ class ElevatorScene:
         self.spawn_timer -= dt
         
         if self.spawn_timer <= 0:
-            self.spawn_timer = self.spawn_interval
+            # Increase spawn rate with chaos
+            self.spawn_timer = max(0.5, self.spawn_interval - (self.chaos_level * 0.01))
             
-            # Determine NPC type based on game balance
-            npc_type = self._determine_npc_type()
+            # Spawn multiple NPCs when chaos is high
+            spawn_count = 1
+            if self.chaos_level > 30:
+                spawn_count = 2
+            if self.chaos_level > 60:
+                spawn_count = 3
             
-            # Choose spawn floor
-            spawn_floor = random.choice(list(self.floors.keys()))
-            floor = self.floors[spawn_floor]
-            
-            # Create NPC
-            x = random.randint(100, SCREEN_WIDTH - 100)
-            y = floor.y - NPC_HEIGHT
-            
-            if npc_type == "good":
-                npc = GoodRobot(x, y)
-            elif npc_type == "evil":
-                npc = EvilRobot(x, y)
-            else:
-                npc = NPC(x, y, npc_type)
+            for _ in range(spawn_count):
+                # Determine NPC type based on game balance
+                npc_type = self._determine_npc_type()
                 
-            npc.current_floor = spawn_floor
-            self.npcs.append(npc)
-            floor.add_waiting_npc(npc)
-            
-            # Adjust spawn rate based on chaos
-            self.spawn_interval = max(1.0, NPC_SPAWN_RATE - (self.chaos_level * 0.02))
+                # Choose spawn floor (avoid floor 1 since it doesn't exist)
+                available_floors = [f for f in self.floors.keys() if f != 1]
+                spawn_floor = random.choice(available_floors)
+                floor = self.floors[spawn_floor]
+                
+                # Create NPC
+                x = random.randint(100, SCREEN_WIDTH - 100)
+                y = floor.y - NPC_HEIGHT
+                
+                if npc_type == "good":
+                    npc = GoodRobot(x, y)
+                elif npc_type == "evil":
+                    npc = EvilRobot(x, y)
+                else:
+                    npc = NPC(x, y, npc_type)
+                    
+                npc.current_floor = spawn_floor
+                # Avoid floor 1 as destination
+                possible_destinations = [f for f in self.floors.keys() if f != 1 and f != spawn_floor]
+                npc.destination_floor = random.choice(possible_destinations)
+                
+                self.npcs.append(npc)
+                floor.add_waiting_npc(npc)
             
     def _determine_npc_type(self):
         """Determine what type of NPC to spawn based on game state."""
@@ -272,67 +304,93 @@ class ElevatorScene:
         else:
             return "neutral"
             
-    def _update_john(self, dt):
-        """Update John the Doorman special character."""
-        if self.john_the_doorman is None:
-            self.spawn_john_timer -= dt
-            if self.spawn_john_timer <= 0:
-                # Spawn John at street level
-                floor = self.floors[0]
-                self.john_the_doorman = NPC(SCREEN_WIDTH // 2, floor.y - NPC_HEIGHT, "neutral")
-                self.john_the_doorman.name = "John"
-                self.john_the_doorman.color = (50, 50, 150)  # Special blue uniform
-                self.john_the_doorman.destination_floor = random.choice([1, 2, 3])
-                self.john_the_doorman.patience = 999  # John is very patient
-                self.john_the_doorman.current_floor = 0
-                self.npcs.append(self.john_the_doorman)
-                floor.add_waiting_npc(self.john_the_doorman)
-                
-                # John's appearance is special
-                self.flash_color = BLUE
-                self.flash_timer = 0.5
-                
-    def _update_alan(self, dt):
-        """Update Alan the robot mastermind on Floor 4."""
-        if self.alan_the_mastermind is None:
-            self.spawn_alan_timer -= dt
-            if self.spawn_alan_timer <= 0:
-                # Spawn Alan at Floor 4 (Robotics Lab)
-                if 4 in self.floors:
-                    floor = self.floors[4]
-                    self.alan_the_mastermind = NPC(SCREEN_WIDTH // 2 - 100, floor.y - NPC_HEIGHT, "good")
-                    self.alan_the_mastermind.name = "Alan"
-                    self.alan_the_mastermind.color = (0, 200, 255)  # Bright cyan for Alan
-                    self.alan_the_mastermind.destination_floor = random.choice([8, 9, 11])  # AI/Biotech floors
-                    self.alan_the_mastermind.patience = 999  # Alan is very patient
-                    self.alan_the_mastermind.current_floor = 4
-                    self.npcs.append(self.alan_the_mastermind)
-                    floor.add_waiting_npc(self.alan_the_mastermind)
+    def _spawn_special_npcs(self, dt):
+        """Spawn special named NPCs on their floors."""
+        self.special_npc_timer -= dt
+        
+        if self.special_npc_timer <= 0:
+            self.special_npc_timer = random.uniform(5, 15)  # Random interval
+            
+            # List of special NPCs and their floors
+            special_spawns = [
+                (0, "John"),  # Street level
+                (2, "Xeno"),  # Event space
+                (3, "Vitalia"),  # Private offices
+                (4, random.choice(["Vitaly", "Xenia", "Alan"])),  # Robotics
+                (6, "Scott"),  # Arts & Music
+                (7, random.choice(["Tony", "Cindy"])),  # Maker Space
+                (8, "Morgan"),  # Biotech
+                (9, "Devinder"),  # AI
+                (10, "China"),  # Accelerator
+                (11, "Laurence"),  # Health
+                (16, "Xeno"),  # d/acc Lounge
+            ]
+            
+            # Pick a random special to spawn
+            floor_num, npc_name = random.choice(special_spawns)
+            
+            # Don't spawn if already exists
+            if npc_name not in self.special_npcs or self.special_npcs[npc_name] not in self.npcs:
+                if floor_num in self.floors:
+                    floor = self.floors[floor_num]
+                    x = random.randint(100, SCREEN_WIDTH - 100)
+                    y = floor.y - NPC_HEIGHT
                     
-                    # Alan's appearance is special
-                    self.flash_color = CYAN
-                    self.flash_timer = 0.5
-                    
-    def _update_escaped_robots(self, dt):
-        """Update bad robots that escape from the basement."""
-        # Randomly spawn escaping bad robots from basement
-        if random.random() < 0.001:  # Low chance per frame
-            # Create a bad robot that's escaping from basement
-            if -1 in self.floors:
-                floor = self.floors[-1]
-                bad_robot = EvilRobot(random.randint(100, SCREEN_WIDTH - 100), floor.y - NPC_HEIGHT)
-                bad_robot.name = "Escaped Robot"
-                bad_robot.destination_floor = random.choice([0, 1, 2, 3])  # Try to escape to upper floors
-                bad_robot.current_floor = -1
-                bad_robot.patience = 60  # Very impatient when escaping
-                bad_robot.enter_rage_mode()  # Already in rage from fighting
-                self.npcs.append(bad_robot)
-                floor.add_waiting_npc(bad_robot)
-                self.escaped_bad_robots.append(bad_robot)
+                    special_npc = create_special_npc(floor_num, x, y)
+                    if special_npc:
+                        # Set proper destination (avoid floor 1)
+                        possible_destinations = [f for f in self.floors.keys() if f != 1 and f != floor_num]
+                        special_npc.destination_floor = random.choice(possible_destinations)
+                        
+                        self.npcs.append(special_npc)
+                        floor.add_waiting_npc(special_npc)
+                        self.special_npcs[npc_name] = special_npc
+                        
+                        # Special effect
+                        self.flash_color = special_npc.special_color if hasattr(special_npc, 'special_color') else WHITE
+                        self.flash_timer = 0.3
+                        
+        # Spawn Headphone James during disasters
+        if (self.flood_disaster.active or self.chaos_level > 80) and "HeadphoneJames" not in self.special_npcs:
+            if random.random() < 0.01:  # Chance to appear
+                floor_num = random.choice(list(self.floors.keys()))
+                floor = self.floors[floor_num]
+                x = SCREEN_WIDTH // 2
+                y = floor.y - NPC_HEIGHT
                 
-                # Alert effect
-                self.screen_shake = 3
-                self.chaos_level = min(100, self.chaos_level + 10)
+                # Create Headphone James to save the day
+                james = create_special_npc(floor_num, x, y)
+                if james:
+                    james.name = "HeadphoneJames"
+                    james.patience = 999
+                    self.npcs.append(james)
+                    floor.add_waiting_npc(james)
+                    self.special_npcs["HeadphoneJames"] = james
+                    
+                    # Epic entrance
+                    self.flash_color = MAGENTA
+                    self.flash_timer = 1.0
+                    self.screen_shake = 10
+                    
+    def _spawn_hackathon_jammer(self):
+        """Spawn NPCs at Floor 2 going to street level during hackathon."""
+        if 2 in self.floors and 0 in self.floors:
+            floor = self.floors[2]
+            x = random.randint(100, SCREEN_WIDTH - 100)
+            y = floor.y - NPC_HEIGHT
+            
+            jammer = NPC(x, y, "neutral")
+            jammer.name = f"Hacker{random.randint(100, 999)}"
+            jammer.current_floor = 2
+            jammer.destination_floor = 0  # Going to street level
+            jammer.patience = 20  # Impatient
+            jammer.color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+            
+            self.npcs.append(jammer)
+            floor.add_waiting_npc(jammer)
+            
+            # Increase chaos
+            self.chaos_level = min(100, self.chaos_level + 2)
                 
     def _handle_elevator_arrivals(self):
         """Handle NPCs entering/exiting elevator when it arrives at floors."""
@@ -503,8 +561,14 @@ class ElevatorScene:
         if self.show_tutorial:
             self._draw_tutorial(draw_surface)
             
-        # Blit to screen with shake
-        screen.blit(draw_surface, shake_offset)
+        # Draw disaster effects
+        self.flood_disaster.draw(draw_surface, int(self.camera_y))
+        self.hackathon_event.draw(draw_surface)
+        
+        # Blit to screen with shake (including disaster shake)
+        disaster_shake = self.flood_disaster.get_shake_offset()
+        total_shake = (shake_offset[0] + disaster_shake[0], shake_offset[1] + disaster_shake[1])
+        screen.blit(draw_surface, total_shake)
         
     def _draw_background(self, screen):
         """Draw dynamic background based on game state."""
@@ -560,23 +624,26 @@ class ElevatorScene:
             p2_text = font_medium.render("↑/↓: Move | RShift: Doors", True, YELLOW)
             screen.blit(p2_text, (SCREEN_WIDTH - 250, SCREEN_HEIGHT - 40))
             
-        # Special character indicator
-        if self.john_the_doorman:
-            john_text = font_medium.render("John is waiting!", True, BLUE)
-            john_rect = john_text.get_rect(center=(SCREEN_WIDTH // 2, 50))
-            screen.blit(john_text, john_rect)
+        # Special character indicators
+        special_count = len([npc for npc in self.special_npcs.values() if npc in self.npcs])
+        if special_count > 0:
+            special_text = font_medium.render(f"🌟 {special_count} Special NPCs waiting! 🌟", True, GOLD)
+            special_rect = special_text.get_rect(center=(SCREEN_WIDTH // 2, 50))
+            screen.blit(special_text, special_rect)
             
-        # Alan indicator
-        if self.alan_the_mastermind:
-            alan_text = font_medium.render("Alan needs transport!", True, CYAN)
-            alan_rect = alan_text.get_rect(center=(SCREEN_WIDTH // 2, 80))
-            screen.blit(alan_text, alan_rect)
+        # Hackathon indicator
+        if self.hackathon_event.active:
+            hack_text = font_medium.render("💻 HACKATHON ON FLOOR 2! 💻", True,
+                                         YELLOW if int(self.timer * 4) % 2 == 0 else ORANGE)
+            hack_rect = hack_text.get_rect(center=(SCREEN_WIDTH // 2, 80))
+            screen.blit(hack_text, hack_rect)
             
-        # Escaped robot warning
-        if self.escaped_bad_robots:
-            warning_text = font_medium.render(f"⚠ {len(self.escaped_bad_robots)} ROBOTS ESCAPING! ⚠", True, RED)
-            warning_rect = warning_text.get_rect(center=(SCREEN_WIDTH // 2, 110))
-            screen.blit(warning_text, warning_rect)
+        # Flood warning
+        if self.flood_disaster.active:
+            flood_text = font_medium.render("🌊 FLOOD DISASTER! 🌊", True,
+                                          CYAN if int(self.timer * 4) % 2 == 0 else BLUE)
+            flood_rect = flood_text.get_rect(center=(SCREEN_WIDTH // 2, 110))
+            screen.blit(flood_text, flood_rect)
             
     def _draw_meter(self, screen, x, y, value, label, color):
         """Draw a meter bar."""
