@@ -11,23 +11,37 @@ from game.core.engine import GameEngine
 
 async def main():
     """Async main game loop for web compatibility."""
-    pygame.init()
+    print("Tower Madness starting (web version)...")
     
-    # Create game engine
-    engine = GameEngine()
+    pygame.init()
+    pygame.mixer.init()
+    
+    # Set up display - CRITICAL for pybag!
+    from game.core.constants import SCREEN_WIDTH, SCREEN_HEIGHT, TITLE, FPS
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption(TITLE)
+    clock = pygame.time.Clock()
+    
+    print(f"Display initialized: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+    
+    # Create game engine with required parameters
+    engine = GameEngine(screen, clock)
+    print("Game engine created, starting main loop...")
     
     # Game loop
-    clock = pygame.time.Clock()
     running = True
     
     while running:
-        dt = clock.tick(60) / 1000.0  # 60 FPS
+        dt = clock.tick(FPS) / 1000.0  # Delta time in seconds
         
         # Handle events
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
                 
         # Update game
         engine.update(dt, events)
@@ -38,10 +52,11 @@ async def main():
         # Update display
         pygame.display.flip()
         
-        # Yield control for web browser
+        # Yield control for web browser - critical for Pygbag
         await asyncio.sleep(0)
     
     pygame.quit()
+    print("Tower Madness ended")
 
 # For Pygbag - it looks for asyncio.run
 if __name__ == "__main__":

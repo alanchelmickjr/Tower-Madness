@@ -7,7 +7,7 @@
 
 ### Alternative Play Options:
 1. **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=alanchelmickjr/Tower-Madness)** - Free, no account needed!
-2. **[Try Web Version](https://alanchelmickjr.github.io/Tower-Madness/)** - Currently being fixed
+2. **[Try Web Version](https://alanchelmickjr.github.io/Tower-Madness/)** - ✅ Fixed and ready to deploy!
 3. **Download & Run**: `pip install pygame && python main.py`
 
 ## 🚨 LIVE at Frontier Tower Retro Arcade Hackathon! 🚨
