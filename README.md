@@ -1,14 +1,3 @@
-## 🌐 **WEB VERSION NOW WORKING!** ✅
-
-**Black screen bug = FIXED!** Run in browser with 2 commands:
-```bash
-pip install pygbag
-pygbag main_web.py
-```
-👉 **[START_HERE.md](START_HERE.md) for super easy instructions!**
-
----
-
 # 🏢 Tower Madness: Elevator Operator Simulator
 
 ## 🎮 ONE-CLICK PLAY OPTIONS 🎮
