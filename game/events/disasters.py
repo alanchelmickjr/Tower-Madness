@@ -30,6 +30,8 @@ class FloodDisaster:
         self.debris_objects = []
         self.lightning_flash = 0
         self.screen_shake = 0
+        self.shake_timer = 0  # Timer for periodic shake pulses
+        self.shake_pulse_interval = 3.0  # Shake every 3 seconds
         
         # Flood stages
         self.flood_stage = 0  # 0: calm, 1: warning, 2: rising, 3: peak, 4: receding
@@ -64,8 +66,8 @@ class FloodDisaster:
             npcs: List of NPCs in the game
         """
         if not self.active:
-            # Random chance to trigger flood
-            if random.random() < 0.0001:  # Very rare
+            # Random chance to trigger flood (reduced frequency)
+            if random.random() < 0.00003:  # Even more rare - about 1/3 as often
                 self.trigger_flood()
             return
             
@@ -151,11 +153,17 @@ class FloodDisaster:
         
     def _update_effects(self, dt):
         """Update visual effects for the flood."""
-        # Screen shake during crisis
+        # Periodic screen shake pulse during crisis (not continuous)
         if self.crisis_phase:
-            self.screen_shake = max(0, self.screen_shake - dt * 5)
-            if random.random() < 0.1:
-                self.screen_shake = min(15, self.screen_shake + 5)
+            self.shake_timer += dt
+            
+            # Pulse shake every few seconds instead of continuously
+            if self.shake_timer >= self.shake_pulse_interval:
+                self.screen_shake = 8  # Moderate shake pulse
+                self.shake_timer = 0
+                
+            # Quick decay after pulse
+            self.screen_shake = max(0, self.screen_shake - dt * 20)
                 
         # Create foam particles at water surface
         if self.active and random.random() < 0.3:
@@ -314,6 +322,7 @@ class FloodDisaster:
         self.debris_objects.clear()
         self.lightning_flash = 0
         self.screen_shake = 0
+        self.shake_timer = 0
         self.heroes_spawned = False
         self.xeno_helping = False
         self.james_helping = False

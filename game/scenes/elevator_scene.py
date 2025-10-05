@@ -116,9 +116,9 @@ class ElevatorScene:
         self.hackathon_event.update(dt, self.elevator, self.npcs, self.floors)
         self.flood_disaster.update(dt, self.elevator, self.npcs)
         
-        # Trigger disasters based on chaos level
+        # Trigger disasters based on chaos level (reduced frequency)
         if self.chaos_level > 50 and not self.flood_disaster.active:
-            if random.random() < 0.001 * (self.chaos_level / 100):
+            if random.random() < 0.0003 * (self.chaos_level / 100):  # 1/3 as frequent
                 self.flood_disaster.trigger_flood()
         
         # Hackathon causes Floor 2 jamming
@@ -257,7 +257,9 @@ class ElevatorScene:
             
             # Remove NPCs that have lost patience
             if npc.patience <= 0 and not npc.in_elevator:
-                self.npcs.remove(npc)
+                # Check before removing to avoid ValueError
+                if npc in self.npcs:
+                    self.npcs.remove(npc)
                 # Penalty for making NPCs wait too long
                 self.score -= 10
                 if npc.npc_type == "good":
@@ -429,7 +431,9 @@ class ElevatorScene:
                 for npc in self.elevator.passengers[:]:
                     if npc.destination_floor == current_floor:
                         npc.exit_elevator(self.elevator)
-                        self.npcs.remove(npc)
+                        # Only remove if still in list (avoid ValueError)
+                        if npc in self.npcs:
+                            self.npcs.remove(npc)
                         
                         # Score based on delivery
                         self._score_delivery(npc, current_floor)
@@ -518,12 +522,15 @@ class ElevatorScene:
         # Remove all evil/bad robots
         for npc in self.npcs[:]:
             if npc.npc_type == "evil" or (hasattr(npc, 'name') and "Escaped" in npc.name):
-                # Remove from floors
+                # Remove from floors first
                 if npc.current_floor in self.floors:
                     floor = self.floors[npc.current_floor]
                     if npc in floor.waiting_npcs:
                         floor.remove_waiting_npc(npc)
-                # Remove from NPCs list
+                # Remove from elevator if present
+                if npc in self.elevator.passengers:
+                    self.elevator.passengers.remove(npc)
+                # Remove from NPCs list (check first to avoid ValueError)
                 if npc in self.npcs:
                     self.npcs.remove(npc)
                     
@@ -553,8 +560,10 @@ class ElevatorScene:
         
         # Effects of imbalance
         if self.chaos_level > 75:
-            # High chaos - more screen shake
-            self.screen_shake = min(5, self.screen_shake + dt * 10)
+            # High chaos - periodic screen shake instead of continuous
+            # Only add shake occasionally to not disrupt gameplay
+            if random.random() < 0.01:  # Small chance each frame
+                self.screen_shake = min(3, self.screen_shake + 2)  # Smaller shake
             self.elevator.emergency_mode = True
         else:
             self.elevator.emergency_mode = False
