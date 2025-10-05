@@ -1,11 +1,4 @@
 # 🏢 Tower Madness: Elevator Operator Simulator
-
-## 🚨 LIVE NOW at Frontier Tower Retro Arcade Hackathon! 🚨
-**This game is being built RIGHT NOW at the Retro Arcade Hackathon happening at Frontier Tower! The hackathon is taking place on Floor 2 ("The Spaceship") - yes, the same floor that gets flooded in the game! Meta enough? Come join us and play the game WHILE we're building it!**
-
-## 🎉 Coming Soon: SF Tech Week Algorave!
-**Tower Madness will be showcased on a real 2-player arcade cabinet at the San Francisco Tech Week Algorave event! Experience the chaos of Frontier Tower on authentic arcade hardware.**
-
 ## 🎮 Elevator Operator - The Flagship Game
 
 ### Overview
