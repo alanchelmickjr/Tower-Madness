@@ -83,8 +83,8 @@ jobs:
           </html>
           EOF
           
-          # Build with pygbag using the fixed main_web.py
-          python -m pygbag --build main_web.py --ume_block 0
+          # Build with pygbag (main.py is already async/web-compatible!)
+          python -m pygbag --build . --ume_block 0
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
