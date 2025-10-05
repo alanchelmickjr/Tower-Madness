@@ -22,6 +22,7 @@ class FloodDisaster:
         self.warning_phase = False
         self.crisis_phase = False
         self.resolution_phase = False
+        self.max_duration = 45.0  # Maximum 45 seconds before auto-resolve
         
         # Visual effects
         self.water_color = (50, 100, 200, 180)  # Semi-transparent blue
@@ -69,6 +70,14 @@ class FloodDisaster:
             return
             
         self.flood_timer += dt
+        
+        # Auto-resolve after max duration
+        if self.flood_timer > self.max_duration:
+            self.resolution_phase = True
+            self.crisis_phase = False
+            self.warning_phase = False
+            self.flood_stage = 4
+            self.target_water_level = SCREEN_HEIGHT + 100
         
         # Update flood stages
         if self.warning_phase:

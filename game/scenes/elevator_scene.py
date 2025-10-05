@@ -27,7 +27,8 @@ class ElevatorScene:
         
         # Create elevator starting at floor 0 (street level)
         elevator_x = SHAFT_X + (SHAFT_WIDTH - ELEVATOR_WIDTH) // 2
-        elevator_y = SCREEN_HEIGHT - 250  # Start at ground floor
+        # Position elevator so it sits ON the floor line, not in the middle of the floor
+        elevator_y = SCREEN_HEIGHT - 200 - ELEVATOR_HEIGHT + 10  # Align bottom with floor line
         self.elevator = Elevator(elevator_x, elevator_y)
         self.elevator.current_floor = 0  # Explicitly set starting floor
         
@@ -79,6 +80,9 @@ class ElevatorScene:
         self.camera_y = 0
         self.camera_target_y = 0
         
+        # General timer for animations
+        self.timer = 0
+        
     def update(self, dt, events):
         """Update the scene.
         
@@ -86,6 +90,9 @@ class ElevatorScene:
             dt: Delta time in seconds
             events: List of pygame events
         """
+        # Update timer
+        self.timer += dt
+        
         # Handle input
         self._handle_input(events)
         
@@ -610,57 +617,159 @@ class ElevatorScene:
         """Draw UI elements."""
         font_large = pygame.font.Font(None, 36)
         font_medium = pygame.font.Font(None, 24)
+        font_small = pygame.font.Font(None, 20)
         
-        # Score
-        score_text = font_large.render(f"Score: {self.score}", True, WHITE)
-        screen.blit(score_text, (20, 20))
+        # Draw main goal panel at top
+        goal_bg = pygame.Rect(10, 10, 350, 180)
+        pygame.draw.rect(screen, (0, 0, 0, 200), goal_bg)
+        pygame.draw.rect(screen, CYAN, goal_bg, 3)
         
-        # Passengers delivered
-        delivered_text = font_medium.render(f"Delivered: {self.passengers_delivered}", True, YELLOW)
-        screen.blit(delivered_text, (20, 60))
+        # Title
+        title_text = font_large.render("🏢 ELEVATOR OPERATOR 🏢", True, YELLOW)
+        screen.blit(title_text, (20, 20))
         
-        # Chaos/Harmony meters
-        self._draw_meter(screen, 20, 100, self.chaos_level, "CHAOS", RED)
-        self._draw_meter(screen, 20, 140, self.harmony_level, "HARMONY", CYAN)
+        # Score with emphasis
+        score_text = font_large.render(f"SCORE: {self.score}", True, WHITE)
+        screen.blit(score_text, (20, 55))
         
-        # Controls hint (Player 1)
-        controls_text = font_medium.render("W/S: Move | E: Doors", True, WHITE)
-        screen.blit(controls_text, (20, SCREEN_HEIGHT - 40))
-        
-        # Elevator status
-        if self.elevator.doors_open:
-            status_text = font_medium.render("Doors OPEN - Press E to close", True, YELLOW)
-        elif self.elevator.moving:
-            status_text = font_medium.render("Moving...", True, GREEN)
+        # Passengers delivered with goal
+        goal_text = "Goal: Deliver 20 passengers!"
+        if self.passengers_delivered >= 20:
+            goal_text = "🎉 GOAL REACHED! Keep going! 🎉"
+            delivered_color = GREEN
+        elif self.passengers_delivered >= 15:
+            delivered_color = YELLOW
         else:
-            status_text = font_medium.render("Ready - Press W/S to move", True, GREEN)
-        status_rect = status_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 40))
-        screen.blit(status_text, status_rect)
+            delivered_color = WHITE
+            
+        delivered_text = font_medium.render(f"Delivered: {self.passengers_delivered}/20", True, delivered_color)
+        screen.blit(delivered_text, (20, 90))
+        
+        goal_surface = font_small.render(goal_text, True, delivered_color)
+        screen.blit(goal_surface, (20, 115))
+        
+        # Chaos/Harmony meters with explanations
+        self._draw_meter(screen, 20, 140, self.chaos_level, "CHAOS", RED)
+        chaos_hint = font_small.render("(Too high = disasters!)", True, GRAY)
+        screen.blit(chaos_hint, (200, 142))
+        
+        self._draw_meter(screen, 20, 165, self.harmony_level, "HARMONY", CYAN)
+        harmony_hint = font_small.render("(Keep this high!)", True, GRAY)
+        screen.blit(harmony_hint, (200, 167))
+        
+        # Draw controls panel at bottom with better visibility
+        controls_bg = pygame.Rect(10, SCREEN_HEIGHT - 120, SCREEN_WIDTH - 20, 110)
+        pygame.draw.rect(screen, (0, 0, 0, 200), controls_bg)
+        pygame.draw.rect(screen, GREEN, controls_bg, 2)
+        
+        # Controls title
+        controls_title = font_medium.render("🎮 CONTROLS 🎮", True, YELLOW)
+        controls_rect = controls_title.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 105))
+        screen.blit(controls_title, controls_rect)
+        
+        # Control instructions
+        control_lines = [
+            "W/↑: Go UP one floor | S/↓: Go DOWN one floor",
+            "E/SPACE: Open/Close Doors (must be stopped!)",
+            "Pick up waiting NPCs → Deliver to their floor → Score points!"
+        ]
+        
+        y_offset = SCREEN_HEIGHT - 75
+        for line in control_lines:
+            text = font_small.render(line, True, WHITE)
+            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y_offset))
+            screen.blit(text, text_rect)
+            y_offset += 22
+        
+        # Elevator status with big visibility
+        status_bg = pygame.Rect(SCREEN_WIDTH - 250, 20, 230, 60)
+        pygame.draw.rect(screen, BLACK, status_bg)
+        
+        if self.elevator.doors_open:
+            status_text = "🚪 DOORS OPEN"
+            status_color = YELLOW
+            pygame.draw.rect(screen, YELLOW, status_bg, 3)
+        elif self.elevator.moving:
+            status_text = "⬆️ MOVING..."
+            status_color = GREEN
+            pygame.draw.rect(screen, GREEN, status_bg, 3)
+        else:
+            status_text = "✅ READY"
+            status_color = CYAN
+            pygame.draw.rect(screen, CYAN, status_bg, 3)
+            
+        status_surface = font_medium.render(status_text, True, status_color)
+        status_rect = status_surface.get_rect(center=(status_bg.centerx, status_bg.centery))
+        screen.blit(status_surface, status_rect)
         
         # Player 2 controls if applicable
         if self.player_count == 2:
             p2_text = font_medium.render("↑/↓: Move | RShift: Doors", True, YELLOW)
             screen.blit(p2_text, (SCREEN_WIDTH - 250, SCREEN_HEIGHT - 40))
             
-        # Special character indicators
+        # Special character indicators with better visibility
         special_count = len([npc for npc in self.special_npcs.values() if npc in self.npcs])
         if special_count > 0:
-            special_text = font_medium.render(f"🌟 {special_count} Special NPCs waiting! 🌟", True, GOLD)
-            special_rect = special_text.get_rect(center=(SCREEN_WIDTH // 2, 50))
-            screen.blit(special_text, special_rect)
+            special_bg = pygame.Rect(SCREEN_WIDTH // 2 - 150, 200, 300, 30)
+            pygame.draw.rect(screen, BLACK, special_bg)
+            pygame.draw.rect(screen, GOLD, special_bg, 2)
             
-        # Hackathon indicator
+            special_text = font_medium.render(f"🌟 {special_count} VIP NPCs waiting! 🌟", True, GOLD)
+            special_rect = special_text.get_rect(center=(SCREEN_WIDTH // 2, 215))
+            screen.blit(special_text, special_rect)
+        
+        # NPCs waiting on each floor indicator
+        waiting_by_floor = {}
+        for npc in self.npcs:
+            if not npc.in_elevator and npc.current_floor in self.floors:
+                if npc.current_floor not in waiting_by_floor:
+                    waiting_by_floor[npc.current_floor] = 0
+                waiting_by_floor[npc.current_floor] += 1
+        
+        if waiting_by_floor:
+            # Draw waiting passengers panel
+            waiting_bg = pygame.Rect(SCREEN_WIDTH - 180, 100, 170, 20 + len(waiting_by_floor) * 20)
+            pygame.draw.rect(screen, (0, 0, 0, 200), waiting_bg)
+            pygame.draw.rect(screen, ORANGE, waiting_bg, 2)
+            
+            waiting_title = font_small.render("WAITING PASSENGERS:", True, ORANGE)
+            screen.blit(waiting_title, (SCREEN_WIDTH - 175, 105))
+            
+            y_pos = 125
+            for floor, count in sorted(waiting_by_floor.items()):
+                floor_name = f"Floor {floor}"
+                if floor == -1:
+                    floor_name = "Basement"
+                elif floor == 0:
+                    floor_name = "Street"
+                elif floor == 17:
+                    floor_name = "Roof"
+                    
+                waiting_text = font_small.render(f"{floor_name}: {count}", True, WHITE)
+                screen.blit(waiting_text, (SCREEN_WIDTH - 170, y_pos))
+                y_pos += 18
+            
+        # Hackathon indicator with timer
         if self.hackathon_event.active:
-            hack_text = font_medium.render("💻 HACKATHON ON FLOOR 2! 💻", True,
+            hack_bg = pygame.Rect(SCREEN_WIDTH // 2 - 180, 240, 360, 35)
+            pygame.draw.rect(screen, BLACK, hack_bg)
+            pygame.draw.rect(screen, ORANGE if int(self.timer * 4) % 2 == 0 else YELLOW, hack_bg, 3)
+            
+            time_left = max(0, self.hackathon_event.duration - self.hackathon_event.timer)
+            hack_text = font_medium.render(f"💻 HACKATHON FLOOR 2! Time: {time_left:.0f}s 💻", True,
                                          YELLOW if int(self.timer * 4) % 2 == 0 else ORANGE)
-            hack_rect = hack_text.get_rect(center=(SCREEN_WIDTH // 2, 80))
+            hack_rect = hack_text.get_rect(center=(SCREEN_WIDTH // 2, 257))
             screen.blit(hack_text, hack_rect)
             
-        # Flood warning
+        # Flood warning with urgency
         if self.flood_disaster.active:
-            flood_text = font_medium.render("🌊 FLOOD DISASTER! 🌊", True,
+            flood_bg = pygame.Rect(SCREEN_WIDTH // 2 - 180, 280, 360, 35)
+            pygame.draw.rect(screen, BLACK, flood_bg)
+            pygame.draw.rect(screen, BLUE if int(self.timer * 4) % 2 == 0 else CYAN, flood_bg, 3)
+            
+            flood_text = font_medium.render("🌊 FLOOD! GET EVERYONE UP! 🌊", True,
                                           CYAN if int(self.timer * 4) % 2 == 0 else BLUE)
-            flood_rect = flood_text.get_rect(center=(SCREEN_WIDTH // 2, 110))
+            flood_rect = flood_text.get_rect(center=(SCREEN_WIDTH // 2, 297))
             screen.blit(flood_text, flood_rect)
             
     def _draw_meter(self, screen, x, y, value, label, color):

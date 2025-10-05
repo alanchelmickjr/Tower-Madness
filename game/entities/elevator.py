@@ -187,7 +187,9 @@ class Elevator:
         """
         # Ground floor (street level) is floor 0
         # Positive floors go up, negative (basement) goes down
-        base_y = SCREEN_HEIGHT - 250  # Ground floor position
+        # The elevator should stop AT the floor line, not in the middle of the floor
+        # This means the elevator bottom should align with the floor line
+        base_y = SCREEN_HEIGHT - 200  # Ground floor line position
         
         # Each floor is FLOOR_HEIGHT pixels apart
         # Going up means decreasing Y (top of screen is 0)
@@ -197,7 +199,9 @@ class Elevator:
         if floor_number > 13:
             adjusted_floor = floor_number - 1  # Shift down by 1 to account for missing floor 13
         
-        return base_y - (adjusted_floor * FLOOR_HEIGHT)
+        # Position elevator so its bottom edge aligns with the floor line
+        # Subtract elevator height so the bottom of the elevator sits on the floor line
+        return base_y - (adjusted_floor * FLOOR_HEIGHT) - self.height + 10  # +10 for slight overlap with floor
         
     def draw(self, screen):
         """Draw the elevator.
@@ -242,15 +246,45 @@ class Elevator:
             pygame.draw.rect(screen, BLACK, left_door, 1)
             pygame.draw.rect(screen, BLACK, right_door, 1)
             
-        # Draw capacity indicator
-        capacity_text = f"{len(self.passengers)}/{self.capacity}"
-        font = pygame.font.Font(None, 20)
-        text_surface = font.render(capacity_text, True, WHITE)
-        text_rect = text_surface.get_rect(center=(self.rect.centerx, self.rect.top - 10))
-        screen.blit(text_surface, text_rect)
+        # Draw capacity indicator with better visibility
+        capacity_text = f"PASSENGERS: {len(self.passengers)}/{self.capacity}"
+        font_large = pygame.font.Font(None, 24)
+        font_small = pygame.font.Font(None, 20)
         
-        # Draw floor indicator
-        floor_text = f"F{self.current_floor}"
-        floor_surface = font.render(floor_text, True, YELLOW)
+        # Draw background for capacity
+        capacity_surface = font_large.render(capacity_text, True, WHITE)
+        capacity_rect = capacity_surface.get_rect(center=(self.rect.centerx, self.rect.top - 15))
+        bg_rect = capacity_rect.inflate(10, 4)
+        pygame.draw.rect(screen, BLACK, bg_rect)
+        pygame.draw.rect(screen, GREEN if len(self.passengers) < self.capacity else RED, bg_rect, 2)
+        screen.blit(capacity_surface, capacity_rect)
+        
+        # Draw floor indicator with better visibility
+        floor_text = f"FLOOR {self.current_floor}"
+        if self.current_floor == -1:
+            floor_text = "BASEMENT"
+        elif self.current_floor == 0:
+            floor_text = "STREET"
+        elif self.current_floor == 17:
+            floor_text = "ROOF"
+            
+        floor_surface = font_large.render(floor_text, True, YELLOW)
         floor_rect = floor_surface.get_rect(center=(self.rect.centerx, self.rect.centery))
+        floor_bg = floor_rect.inflate(10, 4)
+        pygame.draw.rect(screen, BLACK, floor_bg)
+        pygame.draw.rect(screen, YELLOW, floor_bg, 2)
         screen.blit(floor_surface, floor_rect)
+        
+        # Draw passenger list inside elevator
+        if len(self.passengers) > 0:
+            y_offset = self.rect.top + 10
+            for i, passenger in enumerate(self.passengers[:3]):  # Show first 3
+                passenger_text = f"→ Floor {passenger.destination_floor}"
+                text = font_small.render(passenger_text, True, CYAN)
+                screen.blit(text, (self.rect.left + 5, y_offset))
+                y_offset += 20
+            
+            if len(self.passengers) > 3:
+                more_text = f"...+{len(self.passengers) - 3} more"
+                text = font_small.render(more_text, True, GRAY)
+                screen.blit(text, (self.rect.left + 5, y_offset))

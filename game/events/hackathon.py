@@ -15,7 +15,7 @@ class HackathonEvent:
         """Initialize the hackathon event."""
         self.active = False
         self.timer = 0
-        self.duration = 60.0  # 60 second hackathon rush
+        self.duration = 30.0  # 30 second hackathon rush (more reasonable)
         self.spawn_rate = 0.5  # Spawn hackers every 0.5 seconds
         self.spawn_timer = 0
         self.total_hackers = 0
