@@ -1,3 +1,25 @@
+# 🌐 **NEW: WEB VERSION FIXED!** ✅
+
+The black screen bug is **FIXED**! You can now run Tower Madness in your browser!
+
+## 🚀 Super Easy Web Version (2 Commands!)
+
+**Step 1:** Install pygbag
+```bash
+pip install pygbag
+```
+
+**Step 2:** Run the game
+```bash
+pygbag main_web.py
+```
+
+**Step 3:** Open `http://localhost:8000` in your browser and play!
+
+👉 **See [QUICKSTART_WEB.md](QUICKSTART_WEB.md) for detailed instructions**
+
+---
+
 # 🎮 PLAY TOWER MADNESS NOW! 🎮
 
 ## Easiest Way - Replit (Updated Instructions)
