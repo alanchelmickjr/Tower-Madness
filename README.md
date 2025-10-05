@@ -1,7 +1,10 @@
-# 🏢 Tower Madness: Retro Arcade Collection
+# 🏢 Tower Madness: Elevator Operator Simulator
 
-## 🎉 Featured at SF Tech Week Algorave!
-**Tower Madness will be showcased on a real 2-player arcade cabinet at the San Francisco Tech Week Algorave event! Come vibe with us and experience retro gaming with a modern twist on authentic arcade hardware.**
+## 🚨 LIVE NOW at Frontier Tower Retro Arcade Hackathon! 🚨
+**This game is being built RIGHT NOW at the Retro Arcade Hackathon happening at Frontier Tower! The hackathon is taking place on Floor 2 ("The Spaceship") - yes, the same floor that gets flooded in the game! Meta enough? Come join us and play the game WHILE we're building it!**
+
+## 🎉 Coming Soon: SF Tech Week Algorave!
+**Tower Madness will be showcased on a real 2-player arcade cabinet at the San Francisco Tech Week Algorave event! Experience the chaos of Frontier Tower on authentic arcade hardware.**
 
 ## 🎮 Elevator Operator - The Flagship Game
 
@@ -292,35 +295,32 @@ THEN I unlock achievements like:
 ### 🚀 Getting Started
 
 #### Prerequisites
+- Python 3.8 or higher
+- pip (Python package manager)
+
+#### Quick Installation
 ```bash
-# Python 3.8+
-python --version
-
-# Install Pygame
-pip install pygame
-
-# Install AI dependencies (for generators)
-pip install openai pillow numpy
-```
-
-#### Installation
-```bash
-# Clone repository
-git clone https://github.com/yourusername/tower-madness.git
-cd tower-madness
+# Clone the repository
+git clone https://github.com/alanchelmickjr/Tower-Madness.git
+cd Tower-Madness
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the game (single player)
+# Set up OpenAI API (optional, for AI-generated NPC sprites)
+cp .env.example .env.local
+# Edit .env.local and add your OpenAI API key from https://platform.openai.com/api-keys
+
+# Run the game!
 python main.py
-
-# Run in arcade mode (2-player)
-python main.py --arcade --players 2
-
-# Run for arcade cabinet
-python main.py --cabinet --fullscreen
 ```
+
+#### Controls
+- **↑/W**: Move elevator up
+- **↓/S**: Move elevator down
+- **SPACE**: Open/close doors
+- **ESC**: Pause game
+- **R**: Restart (when game over)
 
 #### Configuration
 ```python
@@ -463,10 +463,10 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 ### 📞 Contact
 
-- GitHub: [Tower Madness Repository](https://github.com/yourusername/tower-madness)
-- Discord: [Join our community](https://discord.gg/towermadness)
-- Email: towermadness@example.com
-- Event: Find us at SF Tech Week Algorave!
+- **GitHub**: [Tower Madness Repository](https://github.com/alanchelmickjr/Tower-Madness)
+- **Live at**: Frontier Tower, Floor 2 - Retro Arcade Hackathon (RIGHT NOW!)
+- **Coming to**: SF Tech Week Algorave
+- **Building**: 1062 Folsom St, San Francisco, CA
 
 ---
 
