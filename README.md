@@ -1,4 +1,10 @@
 # 🏢 Tower Madness: Elevator Operator Simulator
+
+## 🎮 [PLAY NOW IN YOUR BROWSER!](https://alanchelmickjr.github.io/Tower-Madness/)
+
+## 🚨 LIVE at Frontier Tower Retro Arcade Hackathon! 🚨
+**Built during the Retro Arcade Hackathon at Frontier Tower, Floor 2 - The same floor that gets flooded in the game!**
+
 ## 🎮 Elevator Operator - The Flagship Game
 
 ### Overview
