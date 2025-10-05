@@ -488,7 +488,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - **GitHub**: [Tower Madness Repository](https://github.com/alanchelmickjr/Tower-Madness)
 - **Live at**: Frontier Tower, Floor 2 - Retro Arcade Hackathon (RIGHT NOW!)
 - **Coming to**: SF Tech Week Algorave
-- **Building**: 1062 Folsom St, San Francisco, CA
+- **Building**: 995 Market St., San Francisco, CA
 
 ---
 
