@@ -1,8 +1,7 @@
 { pkgs }: {
   deps = [
-    pkgs.python39
-    pkgs.python39Packages.pygame
-    pkgs.python39Packages.pip
+    pkgs.python311
+    pkgs.python311Packages.pip
     pkgs.SDL2
     pkgs.SDL2_mixer
     pkgs.SDL2_image
