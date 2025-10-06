@@ -14,16 +14,16 @@
 
 <table>
   <tr>
-    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.02.02%20PM.png" alt="Normal Gameplay" width="400"/><br/><i>Normal gameplay with special NPCs and VIPs</i></td>
-    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.21.53%20PM.png" alt="Floor 4" width="400"/><br/><i>Floor 4 - Alan's Good Robot Lab with demo buttons</i></td>
+    <td><img src="screenshots/towermadness.png" alt="Normal Gameplay" width="400"/><br/><i>Normal gameplay with special NPCs and VIPs</i></td>
+    <td><img src="screenshots/sksk.png" alt="Floor 4" width="400"/><br/><i>Floor 4 - Alan's Good Robot Lab with demo buttons</i></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202025-10-05%20at%202.05.49%20PM.png" alt="Flood Rising" width="400"/><br/><i>🌊 Water rising rapidly! Evacuate lower floors!</i></td>
-    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.15.44%20PM.png" alt="Hackathon" width="400"/><br/><i>💻 Floor 2 Hackathon event chaos!</i></td>
+    <td><img src="screenshots/scren02.png" alt="Flood Rising" width="400"/><br/><i>🌊 Water rising rapidly! Evacuate lower floors!</i></td>
+    <td><img src="screenshots/sdsf.png" alt="Hackathon" width="400"/><br/><i>💻 Floor 2 Hackathon event chaos!</i></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.33.50%20PM.png" alt="Catastrophic Flood" width="400"/><br/><i>🌊 CATASTROPHIC FLOODING at the Secret Rave!</i></td>
-    <td><img src="screenshots/Screenshot%202025-10-05%20at%201.58.22%20PM.png" alt="Multiple Floors" width="400"/><br/><i>Multiple floors with waiting passengers</i></td>
+    <td><img src="screenshots/ScreenshotPM.png" alt="Catastrophic Flood" width="400"/><br/><i>🌊 CATASTROPHIC FLOODING at the Secret Rave!</i></td>
+    <td><img src="screenshots/Screenshot.png" alt="Multiple Floors" width="400"/><br/><i>Multiple floors with waiting passengers</i></td>
   </tr>
 </table>
 
