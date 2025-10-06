@@ -1,23 +1,45 @@
 # 🏢 Tower Madness: Elevator Operator Simulator
 
-## 🌐 **WEB VERSION NOW WORKING ON REPLIT!** ✅
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pygame](https://img.shields.io/badge/Pygame-2.5+-00D100?style=for-the-badge&logo=python&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Playable-brightgreen?style=for-the-badge)
 
-**Play instantly in your browser:** 
-👉 **[PLAY NOW ON REPLIT](https://replit.com/@alanchelmickjr/Tower-Madness)** 👈
+## 🎥 Gameplay Video
 
-Just click "Run" and the game window appears! No installation needed!
+[![Tower Madness Gameplay](https://img.youtube.com/vi/qvpQpuiFzqk/maxresdefault.jpg)](https://youtu.be/qvpQpuiFzqk?si=ke53Aa228oSfMEhU)
+
+*Click to watch full gameplay on YouTube!*
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.02.02%20PM.png" alt="Normal Gameplay" width="400"/><br/><i>Normal gameplay with special NPCs and VIPs</i></td>
+    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.21.53%20PM.png" alt="Floor 4" width="400"/><br/><i>Floor 4 - Alan's Good Robot Lab with demo buttons</i></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/Screenshot%202025-10-05%20at%202.05.49%20PM.png" alt="Flood Rising" width="400"/><br/><i>🌊 Water rising rapidly! Evacuate lower floors!</i></td>
+    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.15.44%20PM.png" alt="Hackathon" width="400"/><br/><i>💻 Floor 2 Hackathon event chaos!</i></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/Screenshot%202025-10-05%20at%204.33.50%20PM.png" alt="Catastrophic Flood" width="400"/><br/><i>🌊 CATASTROPHIC FLOODING at the Secret Rave!</i></td>
+    <td><img src="screenshots/Screenshot%202025-10-05%20at%201.58.22%20PM.png" alt="Multiple Floors" width="400"/><br/><i>Multiple floors with waiting passengers</i></td>
+  </tr>
+</table>
 
 ---
 
-## 🎮 ONE-CLICK PLAY OPTIONS 🎮
+## 🎮 HOW TO PLAY
 
-### 🚀 [PLAY NOW - No Download Required!](https://github.dev/alanchelmickjr/Tower-Madness)
-**↑ Click above, press `.` on GitHub, then run `python main.py` in terminal ↑**
+### Desktop (Recommended - Works Perfectly!)
 
-### Alternative Play Options:
-1. **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=alanchelmickjr/Tower-Madness)** - Free, no account needed!
-2. **[Play on Replit](https://replit.com/@alanchelmickjr/Tower-Madness)** - Best for web! ✅ 
-3. **Download & Run**: `pip install pygame && python main.py`
+```bash
+pip install pygame
+python main.py
+```
+
+### GitHub Codespaces (Cloud Development)
+[Open in Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=alanchelmickjr/Tower-Madness) - Run `python main.py` in terminal
 
 ## 🚨 LIVE at Frontier Tower Retro Arcade Hackathon! 🚨
 **Built during the Retro Arcade Hackathon at Frontier Tower, Floor 2 - The same floor that gets flooded in the game!**
@@ -29,17 +51,6 @@ Just click "Run" and the game window appears! No installation needed!
 
 As the elevator operator (or operators in 2-player mode!), you must navigate the social dynamics, special events, and disasters while managing an increasingly complex cast of characters and situations. Experience the gritty reality of downtown SF - dodge obstacles just to reach the building entrance, hope the doorman John is at his post, and manage an elevator full of tech workers, artists, robots, and the occasional disaster.
 
-![Gameplay](screenshots/gameplay1.png)
-*Normal gameplay with special NPCs and VIP indicators*
-
-![Flood Disaster](screenshots/flood_disaster.png)
-*Epic flood disaster - water rises from basement! Heroes arrive to save the day!*
-
-![Good Robots Lab](screenshots/floor4_good_robots.png)
-*Floor 4 - Alan's Good Robot Lab with demo trigger buttons*
-
-![Catastrophic Flooding](screenshots/catastrophic_flood.png)
-*CATASTROPHIC FLOODING event at the Secret Rave on the Roof!*
 
 ### 🕹️ 2-Player Arcade Cabinet Support
 - **Cooperative Mode**: Work together to manage the chaos
@@ -156,23 +167,7 @@ Each floor has its own theme, color, and narrative purpose:
 - **Particle effects** for special floors
 - **Screen effects** for disasters
 
-## 📋 Installation & Setup
-
-### Quick Play (Recommended)
-
-**Replit** (Best for web):
-```
-https://replit.com/@alanchelmickjr/Tower-Madness
-```
-Click "Run" and play instantly!
-
-**Local Python**:
-```bash
-pip install pygame
-python main.py
-```
-
-### Full Setup
+## 📋 Full Installation
 
 ```bash
 git clone https://github.com/alanchelmickjr/Tower-Madness.git
@@ -180,6 +175,12 @@ cd Tower-Madness
 pip install -r requirements.txt
 python main.py
 ```
+
+## 🚧 Upcoming Features
+
+- 🌐 **Web Version** - Working on browser compatibility (pygbag rendering issues)
+- 🔄 **Replit Support** - Fixing pygame.base module errors
+- 🎮 **Mobile Controls** - Touch interface for tablets/phones
 
 ## 🐛 Fixes Applied (v1.0)
 
