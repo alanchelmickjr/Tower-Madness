@@ -422,18 +422,20 @@ class ElevatorScene:
             
             # List of special NPCs and their floors
             special_spawns = [
-                (0, "John"),  # Street level
+                (0, random.choice(["John", "Noah", "Eric"])),  # Street level
                 (2, "Xeno"),  # Event space
                 (3, "Sophia"),  # Private offices
                 (4, random.choice(["Vitaly", "Xenia", "Alan"])),  # Robotics
                 (6, "Scott"),  # Arts & Music
-                (7, random.choice(["Tony", "Cindy"])),  # Maker Space
-                (8, "Morgan"),  # Biotech
-                (9, "Devinder"),  # AI
+                (7, random.choice(["Tony", "Cindy", "Anna"])),  # Maker Space
+                (8, random.choice(["Morgan", "Elliot"])),  # Biotech
+                (9, random.choice(["Devinder", "Tom", "JingLing"])),  # AI
                 (10, "China"),  # Accelerator
-                (11, "Laurence"),  # Health
-                (16, "Xeno"),  # d/acc Lounge
-            ]
+                (11, random.choice(["Laurence","Lydia","Derrick"])),  # Health
+                (14, "Ming"), # HUman Flourishing
+                (15, random.choice(["Katia","CHP","Christian"])), # Admin/Cowork
+                (16, random.choice(["Xeno", "DJ"]),)
+              ]  # d/acc Lounge
             
             # Pick a random special to spawn
             floor_num, npc_name = random.choice(special_spawns)
