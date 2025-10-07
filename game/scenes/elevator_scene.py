@@ -10,7 +10,7 @@ from game.entities.elevator import Elevator
 from game.entities.floor import Floor
 from game.entities.npc import NPC, GoodRobot, EvilRobot
 from game.entities.special_npcs import create_special_npc
-from game.events.disasters import FloodDisaster
+from game.events.disasters import FloodDisaster, PowerOutage
 from game.events.hackathon import HackathonEvent
 from game.core.ai_sprite_generator import get_sprite_generator
 
@@ -58,6 +58,23 @@ class ElevatorScene:
         self.chaos_level = 0  # Increases with evil robot activity
         self.harmony_level = 0  # Increases with good robot activity
         
+        # Tower Funds Life System
+        self.tower_funds = 10000
+        self.max_tower_funds = 10000
+        self.funds_drain_rate = 0.0108
+        self.low_funds_threshold = 3000
+        
+        # Elevator Operator Stress System
+        self.operator_stress = 0
+        self.max_operator_stress = 100
+        self.stress_threshold_warning = 70
+        self.stress_threshold_quit = 100
+        
+        # 5-Minute Game Timer
+        self.game_time_limit = 300.0  # 5 minutes in seconds
+        self.time_remaining = self.game_time_limit
+        self.delivery_goal = 15  # Reduced from 20 for 5-min sessions
+        
         # Special characters
         self.special_npcs = {}
         self.spawn_special_timer = 2.0  # Start spawning specials after 2 seconds
@@ -66,6 +83,7 @@ class ElevatorScene:
         # Events and disasters
         self.flood_disaster = FloodDisaster()
         self.hackathon_event = HackathonEvent()
+        self.power_outage = PowerOutage()
         
         # Visual effects
         self.screen_shake = 0
@@ -85,8 +103,9 @@ class ElevatorScene:
         
         # Debug disaster buttons (for demo/testing)
         self.debug_mode = True  # Enable for demos
-        self.flood_button = pygame.Rect(SCREEN_WIDTH - 120, 90, 100, 35)
-        self.hackathon_button = pygame.Rect(SCREEN_WIDTH - 120, 135, 100, 35)
+        self.flood_button = pygame.Rect(SCREEN_WIDTH - 220, 15, 90, 30)
+        self.hackathon_button = pygame.Rect(SCREEN_WIDTH - 120, 15, 90, 30)
+        self.power_outage_button = pygame.Rect(SCREEN_WIDTH - 320, 15, 90, 30)
         
     def update(self, dt, events):
         """Update the scene.
@@ -97,6 +116,24 @@ class ElevatorScene:
         """
         # Update timer
         self.timer += dt
+        
+        # Countdown game timer
+        self.time_remaining -= dt
+        if self.time_remaining <= 0:
+            self.time_remaining = 0
+            # Time's up - check if goal reached
+            from game.core.constants import STATE_GAME_OVER
+            return STATE_GAME_OVER
+        
+        # Check for funds depletion game over
+        if self._update_tower_funds(dt):
+            from game.core.constants import STATE_GAME_OVER
+            return STATE_GAME_OVER
+        
+        # Check operator stress
+        if self.operator_stress >= self.stress_threshold_quit:
+            from game.core.constants import STATE_GAME_OVER
+            return STATE_GAME_OVER
         
         # Handle input
         self._handle_input(events)
@@ -118,12 +155,19 @@ class ElevatorScene:
         self._spawn_special_npcs(dt)
         
         # Update events
+        hackathon_was_active = self.hackathon_event.active
         self.hackathon_event.update(dt, self.elevator, self.npcs, self.floors)
+        
+        # Reset chaos when hackathon ends
+        if hackathon_was_active and not self.hackathon_event.active:
+            self.chaos_level = max(0, self.chaos_level - 50)
+        
         self.flood_disaster.update(dt, self.elevator, self.npcs)
+        self.power_outage.update(dt)
         
         # Trigger disasters based on chaos level (balanced frequency)
         if self.chaos_level > 50 and not self.flood_disaster.active:
-            if random.random() < 0.002 * (self.chaos_level / 100):  # 2x original for more action
+            if random.random() < 0.001 * (self.chaos_level / 100):  # Slowed down 2x
                 self.flood_disaster.trigger_flood()
         
         # Hackathon causes Floor 2 jamming
@@ -189,7 +233,7 @@ class ElevatorScene:
                     self._move_elevator_up()
                 elif event.key == PLAYER1_CONTROLS["down"]:
                     self._move_elevator_down()
-                elif event.key == PLAYER1_CONTROLS["open_doors"]:
+                elif event.key == PLAYER1_CONTROLS["open_doors"] or event.key == PLAYER1_CONTROLS["action"]:
                     print(f"Toggling doors. Current state: {self.elevator.doors_open}")
                     self.elevator.toggle_doors()
                     
@@ -199,7 +243,7 @@ class ElevatorScene:
                         self._move_elevator_up()
                     elif event.key == PLAYER2_CONTROLS["down"]:
                         self._move_elevator_down()
-                    elif event.key == PLAYER2_CONTROLS["open_doors"]:
+                    elif event.key == PLAYER2_CONTROLS["open_doors"] or event.key == PLAYER2_CONTROLS["action"]:
                         self.elevator.toggle_doors()
                         
             # Mouse clicks for debug buttons
@@ -213,9 +257,18 @@ class ElevatorScene:
                     if not self.hackathon_event.active:
                         self.hackathon_event.trigger()
                         print("💻 HACKATHON triggered via debug button!")
+                elif self.power_outage_button.collidepoint(mouse_pos):
+                    if not self.power_outage.active:
+                        self.power_outage.trigger()
+                        print("⚡ POWER OUTAGE triggered via debug button!")
                         
     def _move_elevator_up(self):
         """Move elevator up one floor."""
+        # Check if power outage has disabled elevator
+        if self.power_outage.elevator_disabled:
+            print("⚡ Elevator disabled during power outage!")
+            return
+            
         current = self.elevator.current_floor
         # Check if we're at the roof (floor 17)
         if current >= 17:
@@ -243,6 +296,11 @@ class ElevatorScene:
             
     def _move_elevator_down(self):
         """Move elevator down one floor."""
+        # Check if power outage has disabled elevator
+        if self.power_outage.elevator_disabled:
+            print("⚡ Elevator disabled during power outage!")
+            return
+            
         current = self.elevator.current_floor
         if current <= -1:
             print(f"Can't go down - already at basement (Floor {current})")
@@ -279,6 +337,13 @@ class ElevatorScene:
                     self.npcs.remove(npc)
                 # Penalty for making NPCs wait too long
                 self.score -= 10
+                self.tower_funds -= 15  # NPC leaves, cancels membership (original penalty)
+                self.operator_stress += 0.5  # Much slower stress buildup
+                
+                # Warning message when funds drop below threshold
+                if self.tower_funds <= self.low_funds_threshold and self.tower_funds > 0:
+                    print(f"⚠️ LOW FUNDS WARNING! Tower funds: ${int(self.tower_funds)}")
+                
                 if npc.npc_type == "good":
                     self.harmony_level = max(0, self.harmony_level - 5)
                 elif npc.npc_type == "evil":
@@ -519,6 +584,8 @@ class ElevatorScene:
         self.score += base_score
         self.passengers_delivered += 1
         
+        self.tower_funds = min(self.tower_funds + 50, self.max_tower_funds)  # Restore funds
+        
     def _xeno_resolves_all(self):
         """Xeno's special power - resolves all disasters and removes bad robots."""
         print("🌟 XENO PICKED UP! Resolving all disasters! 🌟")
@@ -588,6 +655,29 @@ class ElevatorScene:
         if self.harmony_level > 75:
             # High harmony - bonus spawn rate
             self.spawn_interval = max(0.5, self.spawn_interval - dt * 0.1)
+        
+        # Operator stress naturally decreases quickly
+        self.operator_stress = max(0, self.operator_stress - 5.0 * dt)
+    
+    def _update_tower_funds(self, dt):
+        """Update tower funds - drains over time, game over if depleted"""
+        drain = self.funds_drain_rate * dt
+        
+        # Disasters drain funds much faster
+        if self.flood_disaster.active:
+            drain *= 20  # 20x faster drain during flood
+        if self.hackathon_event.active:
+            drain *= 10  # 10x faster drain during hackathon
+        if self.power_outage.active:
+            drain *= 15  # 15x faster drain during power outage
+            
+        self.tower_funds -= drain
+        
+        if self.tower_funds <= 0:
+            self.tower_funds = 0
+            return True  # Trigger game over
+        
+        return False
             
     def draw(self, screen):
         """Draw the scene.
@@ -652,12 +742,16 @@ class ElevatorScene:
         # Draw UI
         self._draw_ui(draw_surface)
         
-        # Apply flash effect
+        # Draw elevator panel
+        self._draw_elevator_panel(draw_surface)
+        
+        # Apply flash effect (border only to avoid covering UI)
         if self.flash_timer > 0 and self.flash_color:
-            flash_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-            flash_surface.set_alpha(int(100 * self.flash_timer))
-            flash_surface.fill(self.flash_color)
-            draw_surface.blit(flash_surface, (0, 0))
+            border_width = int(20 * self.flash_timer)
+            pygame.draw.rect(draw_surface, self.flash_color, (0, 0, SCREEN_WIDTH, border_width))  # Top
+            pygame.draw.rect(draw_surface, self.flash_color, (0, SCREEN_HEIGHT - border_width, SCREEN_WIDTH, border_width))  # Bottom
+            pygame.draw.rect(draw_surface, self.flash_color, (0, 0, border_width, SCREEN_HEIGHT))  # Left
+            pygame.draw.rect(draw_surface, self.flash_color, (SCREEN_WIDTH - border_width, 0, border_width, SCREEN_HEIGHT))  # Right
             
         # Draw tutorial
         if self.show_tutorial:
@@ -666,6 +760,7 @@ class ElevatorScene:
         # Draw disaster effects
         self.flood_disaster.draw(draw_surface, int(self.camera_y))
         self.hackathon_event.draw(draw_surface)
+        self.power_outage.draw(draw_surface)
         
         # Blit to screen with shake (including disaster shake)
         disaster_shake = self.flood_disaster.get_shake_offset()
@@ -691,140 +786,179 @@ class ElevatorScene:
             pygame.draw.rect(screen, (r, g, b), (0, y, SCREEN_WIDTH, 10))
             
     def _draw_ui(self, screen):
-        """Draw UI elements."""
+        """Draw UI elements in retro arcade dashboard style."""
         font_large = pygame.font.Font(None, 36)
         font_medium = pygame.font.Font(None, 24)
         font_small = pygame.font.Font(None, 20)
+        font_tiny = pygame.font.Font(None, 16)
         
-        # Draw main goal panel at top
-        goal_bg = pygame.Rect(10, 10, 350, 180)
-        pygame.draw.rect(screen, (0, 0, 0, 200), goal_bg)
-        pygame.draw.rect(screen, CYAN, goal_bg, 3)
+        # ═══════════════════════════════════════════════════════════
+        # TOP: Game Timer - prominent center
+        # ═══════════════════════════════════════════════════════════
+        minutes = int(self.time_remaining // 60)
+        seconds = int(self.time_remaining % 60)
+        timer_text = f"{minutes}:{seconds:02d}"
+
+        if self.time_remaining > 180:
+            timer_color = GREEN
+        elif self.time_remaining > 60:
+            timer_color = YELLOW
+        else:
+            timer_color = RED
+
+        timer_font = pygame.font.Font(None, 48)
+        timer_surface = timer_font.render(timer_text, True, timer_color)
+        timer_rect = timer_surface.get_rect(center=(SCREEN_WIDTH // 2, 30))
+
+        bg_rect = timer_rect.inflate(20, 10)
+        pygame.draw.rect(screen, BLACK, bg_rect)
+        pygame.draw.rect(screen, timer_color, bg_rect, 3)
+        screen.blit(timer_surface, timer_rect)
         
-        # Title
-        title_text = font_large.render("🏢 ELEVATOR OPERATOR 🏢", True, YELLOW)
-        screen.blit(title_text, (20, 20))
+        # ═══════════════════════════════════════════════════════════
+        # LEFT PANEL: Score & Mission Status
+        # ═══════════════════════════════════════════════════════════
+        left_panel = pygame.Rect(10, 70, 240, 180)
+        pygame.draw.rect(screen, (10, 10, 20, 220), left_panel)
+        pygame.draw.rect(screen, CYAN, left_panel, 2)
         
-        # Score with emphasis
-        score_text = font_large.render(f"SCORE: {self.score}", True, WHITE)
-        screen.blit(score_text, (20, 55))
+        # Score
+        score_text = font_large.render(f"SCORE: {self.score}", True, YELLOW)
+        screen.blit(score_text, (20, 80))
         
-        # Passengers delivered with goal
-        goal_text = "Goal: Deliver 20 passengers!"
-        if self.passengers_delivered >= 20:
-            goal_text = "🎉 GOAL REACHED! Keep going! 🎉"
+        # Delivered progress
+        if self.passengers_delivered >= self.delivery_goal:
             delivered_color = GREEN
-        elif self.passengers_delivered >= 15:
+        elif self.passengers_delivered >= (self.delivery_goal - 3):
             delivered_color = YELLOW
         else:
             delivered_color = WHITE
             
-        delivered_text = font_medium.render(f"Delivered: {self.passengers_delivered}/20", True, delivered_color)
-        screen.blit(delivered_text, (20, 90))
+        delivered_text = font_medium.render(f"DELIVERED: {self.passengers_delivered}/{self.delivery_goal}", True, delivered_color)
+        screen.blit(delivered_text, (20, 120))
         
-        goal_surface = font_small.render(goal_text, True, delivered_color)
-        screen.blit(goal_surface, (20, 115))
+        # Mission goal
+        if self.passengers_delivered >= self.delivery_goal:
+            goal_text = "✓ GOAL COMPLETE!"
+            goal_color = GREEN
+        else:
+            goal_text = "Deliver 15 in 5 min"
+            goal_color = WHITE
+        goal_surface = font_small.render(goal_text, True, goal_color)
+        screen.blit(goal_surface, (20, 150))
         
-        # Chaos/Harmony meters with explanations
-        self._draw_meter(screen, 20, 140, self.chaos_level, "CHAOS", RED)
-        chaos_hint = font_small.render("(Too high = disasters!)", True, GRAY)
-        screen.blit(chaos_hint, (200, 142))
+        # Funds meter in left panel
+        funds_label = font_small.render("TOWER FUNDS", True, CYAN)
+        screen.blit(funds_label, (20, 180))
         
-        self._draw_meter(screen, 20, 165, self.harmony_level, "HARMONY", CYAN)
-        harmony_hint = font_small.render("(Keep this high!)", True, GRAY)
-        screen.blit(harmony_hint, (200, 167))
+        funds_pct = self.tower_funds / self.max_tower_funds
+        funds_width = int(200 * funds_pct)
         
-        # Draw controls panel at bottom with better visibility
-        controls_bg = pygame.Rect(10, SCREEN_HEIGHT - 120, SCREEN_WIDTH - 20, 110)
-        pygame.draw.rect(screen, (0, 0, 0, 200), controls_bg)
-        pygame.draw.rect(screen, GREEN, controls_bg, 2)
+        if self.tower_funds > 10000:
+            funds_color = GREEN
+        elif self.tower_funds > self.low_funds_threshold:
+            funds_color = YELLOW
+        else:
+            funds_color = RED
         
-        # Controls title
-        controls_title = font_medium.render("🎮 CONTROLS 🎮", True, YELLOW)
-        controls_rect = controls_title.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 105))
-        screen.blit(controls_title, controls_rect)
+        pygame.draw.rect(screen, (30, 30, 30), (20, 200, 200, 20))
+        pygame.draw.rect(screen, funds_color, (20, 200, funds_width, 20))
+        pygame.draw.rect(screen, WHITE, (20, 200, 200, 20), 2)
         
-        # Control instructions
-        control_lines = [
-            "W/↑: Go UP one floor | S/↓: Go DOWN one floor",
-            "E/SPACE: Open/Close Doors (must be stopped!)",
-            "Pick up waiting NPCs → Deliver to their floor → Score points!"
-        ]
+        funds_value = font_small.render(f"${int(self.tower_funds)}", True, WHITE)
+        screen.blit(funds_value, (20, 225))
         
-        y_offset = SCREEN_HEIGHT - 75
-        for line in control_lines:
-            text = font_small.render(line, True, WHITE)
-            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y_offset))
-            screen.blit(text, text_rect)
-            y_offset += 22
+        # Operator Stress
+        if self.operator_stress > self.stress_threshold_warning:
+            stress_text = font_small.render("⚠️ OPERATOR STRESS HIGH!", True, (255, 100, 100))
+            screen.blit(stress_text, (20, 230))
         
-        # Elevator status with big visibility
-        status_bg = pygame.Rect(SCREEN_WIDTH - 250, 20, 230, 60)
-        pygame.draw.rect(screen, BLACK, status_bg)
+        # ═══════════════════════════════════════════════════════════
+        # RIGHT PANEL: Status & Meters
+        # ═══════════════════════════════════════════════════════════
+        right_panel = pygame.Rect(SCREEN_WIDTH - 250, 70, 240, 180)
+        pygame.draw.rect(screen, (10, 10, 20, 220), right_panel)
+        pygame.draw.rect(screen, ORANGE, right_panel, 2)
         
+        # Elevator status
         if self.elevator.doors_open:
             status_text = "🚪 DOORS OPEN"
             status_color = YELLOW
-            pygame.draw.rect(screen, YELLOW, status_bg, 3)
         elif self.elevator.moving:
-            status_text = "⬆️ MOVING..."
+            status_text = "⬆️ MOVING"
             status_color = GREEN
-            pygame.draw.rect(screen, GREEN, status_bg, 3)
         else:
-            status_text = "✅ READY"
+            status_text = "✓ READY"
             status_color = CYAN
-            pygame.draw.rect(screen, CYAN, status_bg, 3)
             
         status_surface = font_medium.render(status_text, True, status_color)
-        status_rect = status_surface.get_rect(center=(status_bg.centerx, status_bg.centery))
-        screen.blit(status_surface, status_rect)
+        screen.blit(status_surface, (SCREEN_WIDTH - 240, 80))
         
-        # Player 2 controls if applicable
-        if self.player_count == 2:
-            p2_text = font_medium.render("↑/↓: Move | RShift: Doors", True, YELLOW)
-            screen.blit(p2_text, (SCREEN_WIDTH - 250, SCREEN_HEIGHT - 40))
-            
-        # Special character indicators with better visibility
+        # Chaos meter
+        self._draw_compact_meter(screen, SCREEN_WIDTH - 240, 120, self.chaos_level, "CHAOS", RED)
+        
+        # Harmony meter
+        self._draw_compact_meter(screen, SCREEN_WIDTH - 240, 160, self.harmony_level, "HARMONY", CYAN)
+        
+        # Passenger count
+        pass_count = len(self.elevator.passengers)
+        pass_color = RED if pass_count >= 6 else YELLOW if pass_count >= 4 else WHITE
+        pass_text = font_small.render(f"IN ELEVATOR: {pass_count}/6", True, pass_color)
+        screen.blit(pass_text, (SCREEN_WIDTH - 240, 200))
+        
+        # ═══════════════════════════════════════════════════════════
+        # BOTTOM: Controls Panel
+        # ═══════════════════════════════════════════════════════════
+        controls_bg = pygame.Rect(10, SCREEN_HEIGHT - 40, SCREEN_WIDTH - 20, 35)
+        pygame.draw.rect(screen, (10, 10, 20, 220), controls_bg)
+        pygame.draw.rect(screen, GREEN, controls_bg, 2)
+        
+        controls_title = font_tiny.render("🎮 CONTROLS", True, YELLOW)
+        screen.blit(controls_title, (20, SCREEN_HEIGHT - 38))
+        
+        control_lines = [
+            "W/↑: UP | S/↓: DOWN | E/SPACE: Doors | Pick up NPCs → Deliver → Score!",
+        ]
+        
+        y_offset = SCREEN_HEIGHT - 22
+        for line in control_lines:
+            text = font_small.render(line, True, WHITE)
+            screen.blit(text, (20, y_offset))
+            y_offset += 20
+        
+        # ═══════════════════════════════════════════════════════════
+        # TOP ALERT BANNERS - Compact and consolidated
+        # ═══════════════════════════════════════════════════════════
+        alert_y = 70  # Start position for alerts
+        alert_height = 30
+        alert_font = pygame.font.Font(None, 24)  # Compact font size
+        
+        # Collect all active alerts
+        alerts = []
+        
+        # VIP indicator
         special_count = len([npc for npc in self.special_npcs.values() if npc in self.npcs])
         if special_count > 0:
-            special_bg = pygame.Rect(SCREEN_WIDTH // 2 - 150, 200, 300, 30)
-            pygame.draw.rect(screen, BLACK, special_bg)
-            pygame.draw.rect(screen, GOLD, special_bg, 2)
-            
-            special_text = font_medium.render(f"🌟 {special_count} VIP NPCs waiting! 🌟", True, GOLD)
-            special_rect = special_text.get_rect(center=(SCREEN_WIDTH // 2, 215))
-            screen.blit(special_text, special_rect)
+            alerts.append((f"⭐ {special_count} VIP waiting!", GOLD))
         
-        # NPCs waiting on each floor indicator
-        waiting_by_floor = {}
-        for npc in self.npcs:
-            if not npc.in_elevator and npc.current_floor in self.floors:
-                if npc.current_floor not in waiting_by_floor:
-                    waiting_by_floor[npc.current_floor] = 0
-                waiting_by_floor[npc.current_floor] += 1
+        # Hackathon indicator
+        if self.hackathon_event.active:
+            time_left = max(0, self.hackathon_event.duration - self.hackathon_event.timer)
+            alerts.append((f"💻 HACKATHON F2! {time_left:.0f}s", ORANGE))
         
-        if waiting_by_floor:
-            # Draw waiting passengers panel
-            waiting_bg = pygame.Rect(SCREEN_WIDTH - 180, 100, 170, 20 + len(waiting_by_floor) * 20)
-            pygame.draw.rect(screen, (0, 0, 0, 200), waiting_bg)
-            pygame.draw.rect(screen, ORANGE, waiting_bg, 2)
-            
-            waiting_title = font_small.render("WAITING PASSENGERS:", True, ORANGE)
-            screen.blit(waiting_title, (SCREEN_WIDTH - 175, 105))
-            
-            y_pos = 125
-            for floor, count in sorted(waiting_by_floor.items()):
-                floor_name = f"Floor {floor}"
-                if floor == -1:
-                    floor_name = "Basement"
-                elif floor == 0:
-                    floor_name = "Street"
-                elif floor == 17:
-                    floor_name = "Roof"
-                    
-                waiting_text = font_small.render(f"{floor_name}: {count}", True, WHITE)
-                screen.blit(waiting_text, (SCREEN_WIDTH - 170, y_pos))
-                y_pos += 18
+        # Flood warning
+        if self.flood_disaster.active:
+            alerts.append(("🌊 FLOOD! GET EVERYONE UP!", CYAN))
+        
+        # Draw all alerts in a single compact banner
+        for alert_text, alert_color in alerts:
+            alert_bg = pygame.Rect(SCREEN_WIDTH // 2 - 180, alert_y, 360, alert_height)
+            pygame.draw.rect(screen, BLACK, alert_bg)
+            pygame.draw.rect(screen, alert_color, alert_bg, 2)
+            alert_surface = alert_font.render(alert_text, True, alert_color)
+            alert_rect = alert_surface.get_rect(center=(SCREEN_WIDTH // 2, alert_y + 15))
+            screen.blit(alert_surface, alert_rect)
+            alert_y += alert_height + 5  # Stack alerts with small gap
         
         # Draw debug disaster trigger buttons (for demo/testing)
         if self.debug_mode:
@@ -846,32 +980,15 @@ class ElevatorScene:
             hack_rect = hack_text.get_rect(center=self.hackathon_button.center)
             screen.blit(hack_text, hack_rect)
             
-            # Debug label
-            debug_label = font_small.render("DEMO TRIGGERS:", True, GRAY)
-            screen.blit(debug_label, (SCREEN_WIDTH - 120, 70))
+            # Power Outage button
+            outage_color = YELLOW if self.power_outage.active else (150, 150, 100)
+            pygame.draw.rect(screen, BLACK, self.power_outage_button)
+            pygame.draw.rect(screen, outage_color, self.power_outage_button, 2)
+            outage_text = font_small.render("⚡ POWER", True, outage_color)
+            outage_rect = outage_text.get_rect(center=self.power_outage_button.center)
+            screen.blit(outage_text, outage_rect)
             
-        # Hackathon indicator with timer
-        if self.hackathon_event.active:
-            hack_bg = pygame.Rect(SCREEN_WIDTH // 2 - 180, 240, 360, 35)
-            pygame.draw.rect(screen, BLACK, hack_bg)
-            pygame.draw.rect(screen, ORANGE if int(self.timer * 4) % 2 == 0 else YELLOW, hack_bg, 3)
-            
-            time_left = max(0, self.hackathon_event.duration - self.hackathon_event.timer)
-            hack_text = font_medium.render(f"💻 HACKATHON FLOOR 2! Time: {time_left:.0f}s 💻", True,
-                                         YELLOW if int(self.timer * 4) % 2 == 0 else ORANGE)
-            hack_rect = hack_text.get_rect(center=(SCREEN_WIDTH // 2, 257))
-            screen.blit(hack_text, hack_rect)
-            
-        # Flood warning with urgency
-        if self.flood_disaster.active:
-            flood_bg = pygame.Rect(SCREEN_WIDTH // 2 - 180, 280, 360, 35)
-            pygame.draw.rect(screen, BLACK, flood_bg)
-            pygame.draw.rect(screen, BLUE if int(self.timer * 4) % 2 == 0 else CYAN, flood_bg, 3)
-            
-            flood_text = font_medium.render("🌊 FLOOD! GET EVERYONE UP! 🌊", True,
-                                          CYAN if int(self.timer * 4) % 2 == 0 else BLUE)
-            flood_rect = flood_text.get_rect(center=(SCREEN_WIDTH // 2, 297))
-            screen.blit(flood_text, flood_rect)
+            # Debug label removed - buttons now at top near timer
             
     def _draw_meter(self, screen, x, y, value, label, color):
         """Draw a meter bar."""
@@ -892,6 +1009,81 @@ class ElevatorScene:
         
         # Bar border
         pygame.draw.rect(screen, WHITE, bar_rect, 1)
+    
+    def _draw_compact_meter(self, screen, x, y, value, label, color):
+        """Draw a compact meter bar for dashboard."""
+        font = pygame.font.Font(None, 18)
+        
+        # Label
+        label_text = font.render(label, True, WHITE)
+        screen.blit(label_text, (x, y))
+        
+        # Bar
+        bar_width = 140
+        bar_height = 16
+        bar_rect = pygame.Rect(x + 80, y, bar_width, bar_height)
+        pygame.draw.rect(screen, (30, 30, 30), bar_rect)
+        
+        # Fill
+        fill_width = int((value / 100) * bar_width)
+        fill_rect = pygame.Rect(x + 80, y, fill_width, bar_height)
+        pygame.draw.rect(screen, color, fill_rect)
+        
+        # Border
+        pygame.draw.rect(screen, WHITE, bar_rect, 2)
+        
+        # Value text
+        value_text = font.render(f"{int(value)}", True, WHITE)
+        screen.blit(value_text, (x + 225, y))
+    
+    def _draw_elevator_panel(self, screen):
+        """Draw elevator button panel showing floors with waiting passengers"""
+        panel_x = SCREEN_WIDTH - 140
+        panel_y = 270
+        panel_width = 125
+        button_height = 25
+        
+        # Panel background
+        pygame.draw.rect(screen, (30, 30, 30), (panel_x, panel_y, panel_width, 500))
+        pygame.draw.rect(screen, CYAN, (panel_x, panel_y, panel_width, 500), 2)
+        
+        # Title (smaller, stacked)
+        title_font = pygame.font.Font(None, 18)
+        title1 = title_font.render("ELEVATOR", True, CYAN)
+        title2 = title_font.render("PANEL", True, CYAN)
+        screen.blit(title1, (panel_x + 30, panel_y + 8))
+        screen.blit(title2, (panel_x + 35, panel_y + 22))
+        
+        # Draw buttons for each floor
+        y_offset = panel_y + 42
+        small_font = pygame.font.Font(None, 20)
+        
+        for floor_num in sorted(self.floors.keys(), reverse=True):
+            if floor_num in [1, 13]:  # Skip non-existent floors
+                continue
+                
+            floor = self.floors[floor_num]
+            waiting_count = len(floor.waiting_npcs)
+            
+            # Button background - highlight if current floor
+            button_color = (100, 100, 150) if floor_num == self.elevator.current_floor else (50, 50, 50)
+            pygame.draw.rect(screen, button_color, (panel_x + 10, y_offset, panel_width - 20, button_height - 2))
+            pygame.draw.rect(screen, WHITE, (panel_x + 10, y_offset, panel_width - 20, button_height - 2), 1)
+            
+            # Floor label
+            floor_name = floor.get_short_name()  # Use floor name if available
+            label = small_font.render(floor_name, True, WHITE)
+            screen.blit(label, (panel_x + 15, y_offset + 5))
+            
+            # Waiting indicator - orange dots for waiting passengers
+            if waiting_count > 0:
+                dots = "●" * min(waiting_count, 3)
+                if waiting_count > 3:
+                    dots = "●●●+"
+                dot_text = small_font.render(dots, True, (255, 165, 0))
+                screen.blit(dot_text, (panel_x + panel_width - 50, y_offset + 5))
+            
+            y_offset += button_height
         
     def _draw_tutorial(self, screen):
         """Draw tutorial hints."""

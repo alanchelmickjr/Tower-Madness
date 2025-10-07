@@ -67,7 +67,7 @@ class FloodDisaster:
         """
         if not self.active:
             # Random chance to trigger flood (balanced frequency)
-            if random.random() < 0.0002:  # More frequent but not overwhelming
+            if random.random() < 0.0001:  # Slowed down 2x
                 self.trigger_flood()
             return
             
@@ -293,12 +293,13 @@ class FloodDisaster:
             
             screen.blit(text, text_rect)
             
-        # Lightning flash effect
+        # Lightning flash effect (border only)
         if self.lightning_flash > 0:
-            flash_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-            flash_surface.set_alpha(int(100 * self.lightning_flash))
-            flash_surface.fill((255, 255, 255))
-            screen.blit(flash_surface, (0, 0))
+            border = int(30 * self.lightning_flash)
+            pygame.draw.rect(screen, WHITE, (0, 0, SCREEN_WIDTH, border))
+            pygame.draw.rect(screen, WHITE, (0, SCREEN_HEIGHT - border, SCREEN_WIDTH, border))
+            pygame.draw.rect(screen, WHITE, (0, 0, border, SCREEN_HEIGHT))
+            pygame.draw.rect(screen, WHITE, (SCREEN_WIDTH - border, 0, border, SCREEN_HEIGHT))
             
         # Draw hero arrival message
         if self.heroes_spawned and not self.resolution_phase:
@@ -337,6 +338,62 @@ class FloodDisaster:
             return (random.randint(-int(self.screen_shake), int(self.screen_shake)),
                    random.randint(-int(self.screen_shake), int(self.screen_shake)))
         return (0, 0)
+
+
+class PowerOutage:
+    """Power outage disaster - emergency lights kick in, elevator disabled."""
+    
+    def __init__(self):
+        self.active = False
+        self.timer = 0
+        self.duration = 10.0
+        self.flicker_timer = 0
+        self.emergency_lights_on = False
+        self.elevator_disabled = False
+        
+    def trigger(self):
+        self.active = True
+        self.timer = 0
+        self.emergency_lights_on = True
+        self.elevator_disabled = True
+        print("⚡ POWER OUTAGE! Emergency lights activated. Elevator disabled.")
+        
+    def update(self, dt):
+        if not self.active:
+            if random.random() < 0.00005:  # Slowed down 2x
+                self.trigger()
+            return
+            
+        self.timer += dt
+        
+        if self.timer > self.duration:
+            self.active = False
+            self.emergency_lights_on = False
+            self.elevator_disabled = False
+            print("✓ Power restored. Elevator operational.")
+            
+    def draw(self, screen):
+        if self.active:
+            # Emergency lights - dim red/amber glow instead of darkness
+            emergency_overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            emergency_overlay.set_alpha(120)
+            emergency_overlay.fill((80, 20, 0))  # Dark red-amber emergency lighting
+            screen.blit(emergency_overlay, (0, 0))
+            
+            # Warning text
+            font = pygame.font.Font(None, 36)
+            text = font.render("⚡ POWER OUTAGE - EMERGENCY LIGHTS ON ⚡", True, (255, 200, 0))
+            rect = text.get_rect(center=(SCREEN_WIDTH // 2, 100))
+            bg_rect = rect.inflate(20, 10)
+            pygame.draw.rect(screen, BLACK, bg_rect)
+            pygame.draw.rect(screen, (255, 200, 0), bg_rect, 2)
+            screen.blit(text, rect)
+            
+            # Elevator status warning
+            small_font = pygame.font.Font(None, 24)
+            elevator_text = small_font.render("⚠️ ELEVATOR DISABLED ⚠️", True, RED)
+            elevator_rect = elevator_text.get_rect(center=(SCREEN_WIDTH // 2, 140))
+            screen.blit(elevator_text, elevator_rect)
 
 
 class FireAlarm:

@@ -166,12 +166,10 @@ class HackathonEvent:
             
         # Draw announcement
         if self.announcement_timer > 0:
-            # Flashing background
+            # Flashing border (removed background overlay)
             if int(self.timer * 8) % 2 == 0:
-                flash_surface = pygame.Surface((SCREEN_WIDTH, 150))
-                flash_surface.set_alpha(50)
-                flash_surface.fill((0, 100, 255))
-                screen.blit(flash_surface, (0, 50))
+                pygame.draw.rect(screen, (0, 100, 255), (0, 50, SCREEN_WIDTH, 3))
+                pygame.draw.rect(screen, (0, 100, 255), (0, 197, SCREEN_WIDTH, 3))
                 
             # Draw message
             font = pygame.font.Font(None, 36)

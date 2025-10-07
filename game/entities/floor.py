@@ -379,3 +379,14 @@ class Floor:
             (x + size, y),
             (x, y + size)
         ])
+    
+    def get_short_name(self):
+        """Get shortened name for button panel"""
+        if self.floor_number == -1:
+            return "BASE"
+        elif self.floor_number == 0:
+            return "ST"
+        elif self.floor_number == 17:
+            return "ROOF"
+        else:
+            return f"F{self.floor_number}"

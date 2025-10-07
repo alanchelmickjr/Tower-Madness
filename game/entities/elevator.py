@@ -259,22 +259,6 @@ class Elevator:
         pygame.draw.rect(screen, GREEN if len(self.passengers) < self.capacity else RED, bg_rect, 2)
         screen.blit(capacity_surface, capacity_rect)
         
-        # Draw floor indicator with better visibility
-        floor_text = f"FLOOR {self.current_floor}"
-        if self.current_floor == -1:
-            floor_text = "BASEMENT"
-        elif self.current_floor == 0:
-            floor_text = "STREET"
-        elif self.current_floor == 17:
-            floor_text = "ROOF"
-            
-        floor_surface = font_large.render(floor_text, True, YELLOW)
-        floor_rect = floor_surface.get_rect(center=(self.rect.centerx, self.rect.centery))
-        floor_bg = floor_rect.inflate(10, 4)
-        pygame.draw.rect(screen, BLACK, floor_bg)
-        pygame.draw.rect(screen, YELLOW, floor_bg, 2)
-        screen.blit(floor_surface, floor_rect)
-        
         # Draw passenger list inside elevator
         if len(self.passengers) > 0:
             y_offset = self.rect.top + 10
