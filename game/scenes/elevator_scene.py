@@ -424,7 +424,7 @@ class ElevatorScene:
             special_spawns = [
                 (0, "John"),  # Street level
                 (2, "Xeno"),  # Event space
-                (3, "Vitalia"),  # Private offices
+                (3, "Sophia"),  # Private offices
                 (4, random.choice(["Vitaly", "Xenia", "Alan"])),  # Robotics
                 (6, "Scott"),  # Arts & Music
                 (7, random.choice(["Tony", "Cindy"])),  # Maker Space
