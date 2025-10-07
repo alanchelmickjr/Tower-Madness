@@ -6,6 +6,7 @@ The player-controlled elevator caught between good and evil
 import pygame
 import random
 from game.core.constants import *
+from game.core.sound_manager import get_sound_manager
 
 class Elevator:
     """Elevator entity that players control."""
@@ -44,6 +45,9 @@ class Elevator:
         self.shake_amount = 0
         self.cable_tension = 0
         self.emergency_mode = False
+        
+        # Sound manager
+        self.sound_manager = get_sound_manager()
         
         # Sound flags
         self.movement_sound_playing = False
@@ -105,6 +109,7 @@ class Elevator:
             self.moving = False
             self.current_floor = self.target_floor
             self.cable_tension = 0
+            self.sound_manager.play_sfx('elevator_arrive')
             print(f"Arrived at floor {self.current_floor}, y position: {self.y}")
             
     def move_to_floor(self, floor_number):
@@ -120,6 +125,7 @@ class Elevator:
                 
             self.target_floor = floor_number
             self.moving = True
+            self.sound_manager.play_sfx('elevator_move')
             print(f"Starting movement from floor {self.current_floor} to floor {floor_number}")
             
             # Add shake for dramatic floors
@@ -135,15 +141,21 @@ class Elevator:
         if not self.moving:
             self.doors_open = not self.doors_open
             self.door_timer = 0
+            if self.doors_open:
+                self.sound_manager.play_sfx('door_open')
+            else:
+                self.sound_manager.play_sfx('door_close')
             
     def open_doors(self):
         """Open elevator doors."""
         if not self.moving:
             self.doors_open = True
+            self.sound_manager.play_sfx('door_open')
             
     def close_doors(self):
         """Close elevator doors."""
         self.doors_open = False
+        self.sound_manager.play_sfx('door_close')
         
     def add_passenger(self, passenger):
         """Add a passenger to the elevator.

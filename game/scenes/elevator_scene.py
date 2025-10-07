@@ -13,6 +13,7 @@ from game.entities.special_npcs import create_special_npc
 from game.events.disasters import FloodDisaster, PowerOutage
 from game.events.hackathon import HackathonEvent
 from game.core.ai_sprite_generator import get_sprite_generator
+from game.core.sound_manager import get_sound_manager
 
 class ElevatorScene:
     """Main gameplay scene managing elevator operations."""
@@ -24,6 +25,9 @@ class ElevatorScene:
             player_count: Number of players (1 or 2)
         """
         self.player_count = player_count
+        
+        # Initialize sound manager
+        self.sound_manager = get_sound_manager()
         
         # Create elevator starting at floor 0 (street level)
         elevator_x = SHAFT_X + (SHAFT_WIDTH - ELEVATOR_WIDTH) // 2
@@ -63,6 +67,7 @@ class ElevatorScene:
         self.max_tower_funds = 10000
         self.funds_drain_rate = 0.0108
         self.low_funds_threshold = 3000
+        self.funds_depleted = False  # Track if funds ran out
         
         # Elevator Operator Stress System
         self.operator_stress = 0
@@ -169,6 +174,7 @@ class ElevatorScene:
         if self.chaos_level > 50 and not self.flood_disaster.active:
             if random.random() < 0.001 * (self.chaos_level / 100):  # Slowed down 2x
                 self.flood_disaster.trigger_flood()
+                self.sound_manager.play_sfx('disaster')
         
         # Hackathon causes Floor 2 jamming
         if self.hackathon_event.check_elevator_at_floor_2(self.elevator):
@@ -339,6 +345,7 @@ class ElevatorScene:
                 self.score -= 10
                 self.tower_funds -= 15  # NPC leaves, cancels membership (original penalty)
                 self.operator_stress += 0.5  # Much slower stress buildup
+                self.sound_manager.play_sfx('npc_angry')
                 
                 # Warning message when funds drop below threshold
                 if self.tower_funds <= self.low_funds_threshold and self.tower_funds > 0:
@@ -392,7 +399,10 @@ class ElevatorScene:
                     
                 npc.current_floor = spawn_floor
                 # Avoid floor 1 as destination
+                # Floors 4 (Good Robot Lab) and 17 (Secret Rave) are safe zones - invisible to evil robots
                 possible_destinations = [f for f in self.floors.keys() if f != 1 and f != spawn_floor]
+                if npc_type == "evil":
+                    possible_destinations = [f for f in possible_destinations if f not in [4, 17]]
                 npc.destination_floor = random.choice(possible_destinations)
                 
                 self.npcs.append(npc)
@@ -450,7 +460,10 @@ class ElevatorScene:
                     special_npc = create_special_npc(floor_num, x, y)
                     if special_npc:
                         # Set proper destination (avoid floor 1)
+                        # Floors 4 (Good Robot Lab) and 17 (Secret Rave) are safe zones - invisible to evil NPCs
                         possible_destinations = [f for f in self.floors.keys() if f != 1 and f != floor_num]
+                        if hasattr(special_npc, 'npc_type') and special_npc.npc_type == "evil":
+                            possible_destinations = [f for f in possible_destinations if f not in [4, 17]]
                         special_npc.destination_floor = random.choice(possible_destinations)
                         
                         self.npcs.append(special_npc)
@@ -460,6 +473,7 @@ class ElevatorScene:
                         # Special effect
                         self.flash_color = special_npc.special_color if hasattr(special_npc, 'special_color') else WHITE
                         self.flash_timer = 0.3
+                        self.sound_manager.play_sfx('vip_spawn')
                         
         # Spawn Headphone James during disasters
         if (self.flood_disaster.active or self.chaos_level > 80) and "HeadphoneJames" not in self.special_npcs:
@@ -482,6 +496,7 @@ class ElevatorScene:
                     self.flash_color = MAGENTA
                     self.flash_timer = 1.0
                     self.screen_shake = 10
+                    self.sound_manager.play_sfx('hero_arrive')
                     
     def _spawn_hackathon_jammer(self):
         """Spawn NPCs at Floor 2 going to street level during hackathon."""
@@ -521,12 +536,14 @@ class ElevatorScene:
                         
                         # Score based on delivery
                         self._score_delivery(npc, current_floor)
+                        self.sound_manager.play_sfx('npc_exit')
                         
                 # NPCs enter if there's room
                 for npc in floor.waiting_npcs[:]:
                     if not self.elevator.is_full():
                         if npc.enter_elevator(self.elevator):
                             floor.remove_waiting_npc(npc)
+                            self.sound_manager.play_sfx('npc_enter')
                             
                             # Special: Xeno resolves all disasters when picked up!
                             if hasattr(npc, 'name') and npc.name == "Xeno":
@@ -543,18 +560,21 @@ class ElevatorScene:
             self.harmony_level = min(100, self.harmony_level + 10)
             self.flash_color = CYAN
             self.flash_timer = 0.3
+            self.sound_manager.play_sfx('bonus')
         elif npc.npc_type == "evil" and floor_num == -1:
             # Evil robot delivered to Fight Club
             base_score += 15
             self.chaos_level = min(100, self.chaos_level + 5)
             self.flash_color = RED
             self.flash_timer = 0.3
+            self.sound_manager.play_sfx('evil_laugh')
         elif floor_num == 17:  # Roof rave escape
             # Anyone escaping to the secret roof rave
             base_score += 30
             self.harmony_level = min(100, self.harmony_level + 10)
             self.flash_color = MAGENTA
             self.flash_timer = 0.5
+            self.sound_manager.play_sfx('powerup')
         elif floor_num == 6:  # Arts & Music
             # Bonus for creative floors
             base_score += 15
@@ -564,6 +584,7 @@ class ElevatorScene:
         if hasattr(npc, 'name') and npc.name == "John":
             base_score += 50
             self.harmony_level = min(100, self.harmony_level + 20)
+            self.sound_manager.play_sfx('special_delivery')
             # John will respawn later
             self.spawn_john_timer = random.uniform(10, 20)
             self.john_the_doorman = None
@@ -572,6 +593,7 @@ class ElevatorScene:
         if hasattr(npc, 'name') and npc.name == "Alan":
             base_score += 75
             self.harmony_level = min(100, self.harmony_level + 30)
+            self.sound_manager.play_sfx('special_delivery')
             # Alan will respawn later
             self.spawn_alan_timer = random.uniform(15, 25)
             self.alan_the_mastermind = None
@@ -633,6 +655,7 @@ class ElevatorScene:
         self.flash_color = GOLD
         self.flash_timer = 1.0
         self.screen_shake = 5
+        self.sound_manager.play_sfx('xeno_power')
         
         # Bonus score
         self.score += 100
@@ -677,6 +700,10 @@ class ElevatorScene:
         
         if self.tower_funds <= 0:
             self.tower_funds = 0
+            if not self.funds_depleted:
+                self.funds_depleted = True
+                self.sound_manager.play_sfx('game_over')
+                print("💸 TOWER FUNDS DEPLETED! GAME OVER!")
             return True  # Trigger game over
         
         return False
@@ -951,6 +978,15 @@ class ElevatorScene:
         # Flood warning
         if self.flood_disaster.active:
             alerts.append(("🌊 FLOOD! GET EVERYONE UP!", CYAN))
+        
+        # Low funds warning
+        if self.tower_funds <= self.low_funds_threshold and self.tower_funds > 0:
+            if int(self.timer * 2) % 2 == 0:  # Flashing effect
+                alerts.append((f"💸 LOW FUNDS: ${int(self.tower_funds)}!", RED))
+        
+        # Funds depleted message
+        if self.funds_depleted:
+            alerts.append(("💸 TOWER FUNDS DEPLETED!", RED))
         
         # Draw all alerts in a single compact banner
         for alert_text, alert_color in alerts:

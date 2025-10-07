@@ -207,6 +207,7 @@ STATE_MENU = "menu"
 STATE_PLAYING = "playing"
 STATE_PAUSED = "paused"
 STATE_GAME_OVER = "game_over"
+STATE_NAME_ENTRY = "name_entry"
 
 # Player controls (for 2-player arcade)
 PLAYER1_CONTROLS = {

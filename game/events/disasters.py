@@ -7,6 +7,7 @@ import pygame
 import random
 import math
 from game.core.constants import *
+from game.core.sound_manager import get_sound_manager
 
 class FloodDisaster:
     """Epic flood disaster that threatens the tower."""
@@ -23,6 +24,9 @@ class FloodDisaster:
         self.crisis_phase = False
         self.resolution_phase = False
         self.max_duration = 45.0  # Maximum 45 seconds before auto-resolve
+        
+        # Sound manager
+        self.sound_manager = get_sound_manager()
         
         # Visual effects
         self.water_color = (50, 100, 200, 180)  # Semi-transparent blue
@@ -55,6 +59,7 @@ class FloodDisaster:
         self.warning_phase = True
         self.warning_timer = 5.0  # 5 seconds warning
         self.screen_shake = 10
+        self.sound_manager.play_sfx('disaster')
         print("FLOOD DISASTER TRIGGERED!")
         
     def update(self, dt, elevator, npcs):
@@ -89,6 +94,7 @@ class FloodDisaster:
                 self.crisis_phase = True
                 self.flood_stage = 2
                 self.target_water_level = SCREEN_HEIGHT - 200  # Flood to floor 2
+                self.sound_manager.play_sfx('alarm')
                 
         elif self.crisis_phase:
             # Water rising
@@ -109,6 +115,7 @@ class FloodDisaster:
                 self.crisis_phase = False
                 self.flood_stage = 4
                 self.target_water_level = SCREEN_HEIGHT + 100
+                self.sound_manager.play_sfx('powerup')
                 
         elif self.resolution_phase:
             # Water receding
@@ -119,6 +126,7 @@ class FloodDisaster:
                     # Flood ended
                     self.active = False
                     self.flood_stage = 0
+                    self.sound_manager.play_sfx('coin')
                     self.reset()
                     
         # Update visual effects
@@ -351,11 +359,15 @@ class PowerOutage:
         self.emergency_lights_on = False
         self.elevator_disabled = False
         
+        # Sound manager
+        self.sound_manager = get_sound_manager()
+        
     def trigger(self):
         self.active = True
         self.timer = 0
         self.emergency_lights_on = True
         self.elevator_disabled = True
+        self.sound_manager.play_sfx('power_down')
         print("⚡ POWER OUTAGE! Emergency lights activated. Elevator disabled.")
         
     def update(self, dt):
@@ -370,6 +382,7 @@ class PowerOutage:
             self.active = False
             self.emergency_lights_on = False
             self.elevator_disabled = False
+            self.sound_manager.play_sfx('power_up')
             print("✓ Power restored. Elevator operational.")
             
     def draw(self, screen):
@@ -405,10 +418,14 @@ class FireAlarm:
         self.alarm_timer = 0
         self.alarm_sound = True
         
+        # Sound manager
+        self.sound_manager = get_sound_manager()
+        
     def trigger(self):
         """Trigger the fire alarm."""
         self.active = True
         self.alarm_timer = 30.0  # 30 second evacuation
+        self.sound_manager.play_sfx('alarm')
         
     def update(self, dt):
         """Update fire alarm state."""
