@@ -43,7 +43,7 @@
             margin-bottom: 30px;
         }
         
-        #pygame-canvas {
+        #canvas {
             border: 3px solid #0ff;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
             border-radius: 10px;
@@ -132,8 +132,8 @@
             <p style="color: #ff6b6b; margin-top: 20px;">⚠️ Must click the game first, then press SPACEBAR ⚠️</p>
         </div>
         <div id="error-message" class="error" style="display: none;"></div>
-        
-        <canvas id="pygame-canvas" tabindex="0"></canvas>
+
+        <canvas id="canvas" tabindex="0"></canvas>
         
         <div class="controls">
             <h3>🎮 CONTROLS</h3>
@@ -150,19 +150,24 @@
         </div>
     </div>
     
+    <!-- Pygbag loader script -->
+    <script src="https://pygame-web.github.io/archives/0.9/pythons.js" type="module" async defer></script>
+
     <script type="module">
         async function loadGame() {
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error-message');
-            const canvas = document.getElementById('pygame-canvas');
-            
+            const canvas = document.getElementById('canvas');
+
             try {
                 // Load Pygbag/Pyodide
-                loadingDiv.textContent = '📦 Loading Python environment...';
-                
+                loadingDiv.innerHTML = '📦 Loading Python environment...<br><small style="color: #888;">This may take 10-20 seconds on first load</small>';
+                console.log('🎮 Tower Madness - Starting initialization...');
+
                 // Auto-focus and update instructions when canvas appears
                 const observer = new MutationObserver(() => {
                     if (canvas && canvas.width > 0) {
+                        console.log('✅ Canvas initialized with dimensions:', canvas.width, 'x', canvas.height);
                         canvas.focus();
                         canvas.setAttribute('tabindex', '0');
                         canvas.style.outline = '3px solid #0ff';
@@ -175,9 +180,9 @@
                         console.log('Canvas ready - click it and press SPACEBAR');
                     }
                 });
-                
+
                 observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] });
-                
+
                 // Click handler with visual feedback
                 canvas.addEventListener('click', () => {
                     canvas.focus();
@@ -187,13 +192,27 @@
                         <p style="font-size: 24px; color: #fff;">Now press <strong>SPACEBAR</strong> to start!</p>
                     `;
                     console.log('Canvas focused - press SPACEBAR now');
-                    
+
+                    // Try to unlock audio on click (Web Audio API requirement)
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (AudioContext) {
+                            const audioContext = new AudioContext();
+                            if (audioContext.state === 'suspended') {
+                                audioContext.resume();
+                                console.log('🔊 Audio context resumed');
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Could not unlock audio:', e);
+                    }
+
                     // Reset outline after a moment
                     setTimeout(() => {
                         canvas.style.outline = '3px solid #0ff';
                     }, 1000);
                 });
-                
+
                 // Keyboard event logging
                 canvas.addEventListener('keydown', (e) => {
                     console.log('Key pressed:', e.key, e.code);
@@ -203,7 +222,20 @@
                         `;
                     }
                 });
-                
+
+                // Monitor for Python errors
+                window.addEventListener('error', (e) => {
+                    console.error('Error detected:', e.message);
+                    if (e.message.includes('Python')) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.innerHTML = `
+                            <h3>❌ Python Error</h3>
+                            <p>${e.message}</p>
+                            <p>Please try refreshing the page.</p>
+                        `;
+                    }
+                });
+
             } catch (error) {
                 console.error('Error loading game:', error);
                 errorDiv.style.display = 'block';
@@ -215,7 +247,7 @@
                 loadingDiv.style.display = 'none';
             }
         }
-        
+
         // Start loading when page is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', loadGame);

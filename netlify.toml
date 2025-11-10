@@ -1,5 +1,5 @@
 [build]
-  command = "pip3 install pygbag && python3 -m pygbag --build main_web.py"
+  command = "pip3 install pygbag && python3 -m pygbag --build --template index.html main_web.py"
   publish = "build/web"
 
 [[redirects]]
