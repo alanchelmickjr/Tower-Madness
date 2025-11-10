@@ -710,91 +710,114 @@ class ElevatorScene:
             
     def draw(self, screen):
         """Draw the scene.
-        
+
         Args:
             screen: Pygame surface to draw on
         """
-        # Apply screen shake
-        shake_offset = [0, 0]
-        if self.screen_shake > 0:
-            shake_offset[0] = random.randint(-int(self.screen_shake), int(self.screen_shake))
-            shake_offset[1] = random.randint(-int(self.screen_shake), int(self.screen_shake))
-            
-        # Create drawing surface
-        draw_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        draw_surface.fill(BLACK)
-        
-        # Draw background gradient based on game state
-        self._draw_background(draw_surface)
-        
-        # Create a scrollable surface for game objects (extended for 19 floors total)
-        game_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT * 3))
-        game_surface.fill((0, 0, 0, 0))
-        
-        # Draw elevator shaft (extended for all floors from -1 to 17)
-        shaft_rect = pygame.Rect(SHAFT_X, -SCREEN_HEIGHT * 2 + int(self.camera_y), SHAFT_WIDTH, SCREEN_HEIGHT * 3)
-        pygame.draw.rect(game_surface, DARK_GRAY, shaft_rect)
-        pygame.draw.rect(game_surface, GRAY, shaft_rect, 3)
-        
-        # Draw floors with camera offset
-        for floor_num, floor in self.floors.items():
-            # Adjust floor drawing position based on camera
-            floor_y = floor.y + int(self.camera_y)
-            if -100 < floor_y < SCREEN_HEIGHT + 100:  # Only draw visible floors
-                # Create temporary floor rect with camera offset
-                temp_floor = Floor(floor_num, floor_y)
-                temp_floor.waiting_npcs = floor.waiting_npcs
-                temp_floor.ambient_particles = floor.ambient_particles
-                temp_floor.glow_intensity = floor.glow_intensity
-                temp_floor.light_flicker = floor.light_flicker
-                temp_floor.effect_timer = floor.effect_timer
-                temp_floor.draw(draw_surface)
-            
-        # Draw elevator with camera offset
-        # Save original position
-        original_y = self.elevator.rect.y
-        self.elevator.rect.y = int(self.elevator.y + self.camera_y)
-        self.elevator.draw(draw_surface)
-        self.elevator.rect.y = original_y  # Restore original position
-        
-        # Draw NPCs with camera offset
-        for npc in self.npcs:
-            if not npc.in_elevator:
-                # Save original position
-                original_npc_y = npc.rect.y
-                npc.rect.y = int(npc.y + self.camera_y)
-                # Only draw if visible
-                if -50 < npc.rect.y < SCREEN_HEIGHT + 50:
-                    npc.draw(draw_surface)
-                npc.rect.y = original_npc_y  # Restore
-                
-        # Draw UI
-        self._draw_ui(draw_surface)
-        
-        # Draw elevator panel
-        self._draw_elevator_panel(draw_surface)
-        
-        # Apply flash effect (border only to avoid covering UI)
-        if self.flash_timer > 0 and self.flash_color:
-            border_width = int(20 * self.flash_timer)
-            pygame.draw.rect(draw_surface, self.flash_color, (0, 0, SCREEN_WIDTH, border_width))  # Top
-            pygame.draw.rect(draw_surface, self.flash_color, (0, SCREEN_HEIGHT - border_width, SCREEN_WIDTH, border_width))  # Bottom
-            pygame.draw.rect(draw_surface, self.flash_color, (0, 0, border_width, SCREEN_HEIGHT))  # Left
-            pygame.draw.rect(draw_surface, self.flash_color, (SCREEN_WIDTH - border_width, 0, border_width, SCREEN_HEIGHT))  # Right
-            
-        # Draw tutorial
-        if self.show_tutorial:
-            self._draw_tutorial(draw_surface)
-            
-        # Draw disaster effects
-        self.flood_disaster.draw(draw_surface, int(self.camera_y))
-        self.hackathon_event.draw(draw_surface)
-        self.power_outage.draw(draw_surface)
-        
-        # Blit to screen with shake (including disaster shake)
-        disaster_shake = self.flood_disaster.get_shake_offset()
-        total_shake = (shake_offset[0] + disaster_shake[0], shake_offset[1] + disaster_shake[1])
-        screen.blit(draw_surface, total_shake)
+        try:
+            # Apply screen shake
+            shake_offset = [0, 0]
+            if self.screen_shake > 0:
+                shake_offset[0] = random.randint(-int(self.screen_shake), int(self.screen_shake))
+                shake_offset[1] = random.randint(-int(self.screen_shake), int(self.screen_shake))
+
+            # Create drawing surface
+            draw_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            draw_surface.fill(BLACK)
+
+            # Draw background gradient based on game state
+            self._draw_background(draw_surface)
+
+            # Create a scrollable surface for game objects (extended for 19 floors total)
+            game_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT * 3))
+            game_surface.fill((0, 0, 0, 0))
+
+            # Draw elevator shaft (extended for all floors from -1 to 17)
+            shaft_rect = pygame.Rect(SHAFT_X, -SCREEN_HEIGHT * 2 + int(self.camera_y), SHAFT_WIDTH, SCREEN_HEIGHT * 3)
+            pygame.draw.rect(game_surface, DARK_GRAY, shaft_rect)
+            pygame.draw.rect(game_surface, GRAY, shaft_rect, 3)
+
+            # Draw floors with camera offset
+            for floor_num, floor in self.floors.items():
+                # Adjust floor drawing position based on camera
+                floor_y = floor.y + int(self.camera_y)
+                if -100 < floor_y < SCREEN_HEIGHT + 100:  # Only draw visible floors
+                    # Create temporary floor rect with camera offset
+                    temp_floor = Floor(floor_num, floor_y)
+                    temp_floor.waiting_npcs = floor.waiting_npcs
+                    temp_floor.ambient_particles = floor.ambient_particles
+                    temp_floor.glow_intensity = floor.glow_intensity
+                    temp_floor.light_flicker = floor.light_flicker
+                    temp_floor.effect_timer = floor.effect_timer
+                    temp_floor.draw(draw_surface)
+
+            # Draw elevator with camera offset
+            # Save original position
+            original_y = self.elevator.rect.y
+            self.elevator.rect.y = int(self.elevator.y + self.camera_y)
+            self.elevator.draw(draw_surface)
+            self.elevator.rect.y = original_y  # Restore original position
+
+            # Draw NPCs with camera offset
+            for npc in self.npcs:
+                if not npc.in_elevator:
+                    # Save original position
+                    original_npc_y = npc.rect.y
+                    npc.rect.y = int(npc.y + self.camera_y)
+                    # Only draw if visible
+                    if -50 < npc.rect.y < SCREEN_HEIGHT + 50:
+                        npc.draw(draw_surface)
+                    npc.rect.y = original_npc_y  # Restore
+
+            # Draw UI
+            self._draw_ui(draw_surface)
+
+            # Draw elevator panel
+            self._draw_elevator_panel(draw_surface)
+
+            # Apply flash effect (border only to avoid covering UI)
+            if self.flash_timer > 0 and self.flash_color:
+                border_width = int(20 * self.flash_timer)
+                pygame.draw.rect(draw_surface, self.flash_color, (0, 0, SCREEN_WIDTH, border_width))  # Top
+                pygame.draw.rect(draw_surface, self.flash_color, (0, SCREEN_HEIGHT - border_width, SCREEN_WIDTH, border_width))  # Bottom
+                pygame.draw.rect(draw_surface, self.flash_color, (0, 0, border_width, SCREEN_HEIGHT))  # Left
+                pygame.draw.rect(draw_surface, self.flash_color, (SCREEN_WIDTH - border_width, 0, border_width, SCREEN_HEIGHT))  # Right
+
+            # Draw tutorial
+            if self.show_tutorial:
+                self._draw_tutorial(draw_surface)
+
+            # Draw disaster effects
+            self.flood_disaster.draw(draw_surface, int(self.camera_y))
+            self.hackathon_event.draw(draw_surface)
+            self.power_outage.draw(draw_surface)
+
+            # Blit to screen with shake (including disaster shake)
+            disaster_shake = self.flood_disaster.get_shake_offset()
+            total_shake = (shake_offset[0] + disaster_shake[0], shake_offset[1] + disaster_shake[1])
+            screen.blit(draw_surface, total_shake)
+
+        except Exception as e:
+            # Critical error handling - show error instead of black screen
+            print(f"ERROR in ElevatorScene.draw(): {e}")
+            import traceback
+            traceback.print_exc()
+
+            # Draw error message on screen
+            screen.fill((20, 0, 0))  # Dark red background
+            font = pygame.font.Font(None, 36)
+            error_text = font.render("RENDERING ERROR", True, (255, 100, 100))
+            error_rect = error_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
+            screen.blit(error_text, error_rect)
+
+            small_font = pygame.font.Font(None, 24)
+            details_text = small_font.render(str(e)[:60], True, (255, 200, 200))
+            details_rect = details_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+            screen.blit(details_text, details_rect)
+
+            help_text = small_font.render("Check console for details - Press ESC to exit", True, (200, 200, 200))
+            help_rect = help_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
+            screen.blit(help_text, help_rect)
         
     def _draw_background(self, screen):
         """Draw dynamic background based on game state."""
