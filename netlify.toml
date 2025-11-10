@@ -1,0 +1,11 @@
+[build]
+  command = "pip3 install pygbag && python3 -m pygbag --build main_web.py"
+  publish = "build/web"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  PYTHON_VERSION = "3.11"

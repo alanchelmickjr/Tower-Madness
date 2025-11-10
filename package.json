@@ -1,0 +1,11 @@
+{
+  "name": "tower-madness",
+  "version": "1.0.0",
+  "description": "Tower Madness - Elevator Operator Game",
+  "scripts": {
+    "build": "pip3 install pygbag && python3 -m pygbag --build main_web.py"
+  },
+  "keywords": ["game", "pygame", "tower", "elevator"],
+  "author": "",
+  "license": "ISC"
+}
