@@ -46,10 +46,11 @@ class SoundManager:
         try:
             if not pygame.mixer.get_init():
                 print("Initializing pygame.mixer for web audio...")
-                pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-                print(f"Audio initialized: {pygame.mixer.get_init()}")
+                # Use settings optimized for web browsers
+                pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=1024)
+                print(f"✓ Audio initialized: {pygame.mixer.get_init()}")
             else:
-                print(f"Audio already initialized: {pygame.mixer.get_init()}")
+                print(f"✓ Audio already initialized: {pygame.mixer.get_init()}")
 
             # Generate sounds
             self._generate_sounds()
@@ -59,64 +60,71 @@ class SoundManager:
             test_sound = self.generator.generate_tone(440, 0.01, 'sine', 0.1)
             if test_sound:
                 print("✓ Audio test sound created successfully")
+                # Don't play it yet - wait for user interaction
             else:
-                print("✗ Failed to create test sound")
+                print("⚠ Failed to create test sound - audio may not work")
+                # Don't disable completely, try to unlock later
                 self.enabled = False
 
+            # In web browsers, audio is initially disabled until user interaction
+            print("ℹ Note: In web browsers, click or press a key to enable audio")
+
         except Exception as e:
-            print(f"✗ ERROR: Could not initialize audio: {e}")
-            print("  Audio will be disabled. This is common in web browsers.")
-            print("  The game will continue without sound.")
+            print(f"⚠ Audio initialization warning: {e}")
+            print("  Audio will be disabled until user interaction.")
+            print("  The game will continue - click or press a key to enable sound.")
             import traceback
             traceback.print_exc()
+            # Don't crash, just disable audio temporarily
             self.enabled = False
             
     def _generate_sounds(self):
         """Generate all game sound effects."""
-        if not self.enabled:
-            return
-            
+        # Try to generate sounds even if disabled - they might work after unlock
         try:
-            print("Generating 8-bit sound effects...")
-            
+            print("🎵 Generating 8-bit sound effects...")
+
             # Elevator sounds
             self.sounds['elevator_start'] = self.generator.generate_elevator_move(0.25)
             self.sounds['elevator_stop'] = self.generator.generate_ding(0.3)
             self.sounds['elevator_ding'] = self.generator.generate_ding(0.35)
-            
+
             # Door sounds
             self.sounds['doors_open'] = self.generator.generate_door_sound(opening=True, volume=0.25)
             self.sounds['doors_close'] = self.generator.generate_door_sound(opening=False, volume=0.25)
-            
+
             # NPC sounds
             self.sounds['npc_enter'] = self.generator.generate_pickup(0.3)
             self.sounds['npc_exit'] = self.generator.generate_tone(600, 0.1, 'square', 0.25)
             self.sounds['npc_delivered'] = self.generator.generate_delivery(0.3)
             self.sounds['npc_angry'] = self.generator.generate_warning(0.25)
             self.sounds['special_npc'] = self.generator.generate_sweep(400, 1200, 0.3, 'sine', 0.3)
-            
+
             # Scoring sounds
             self.sounds['score_points'] = self.generator.generate_tone(800, 0.1, 'square', 0.25)
             self.sounds['bonus_score'] = self.generator.generate_sweep(600, 1200, 0.2, 'square', 0.3)
             self.sounds['high_score'] = self.generator.generate_high_score(0.35)
-            
+
             # Disaster sounds
             self.sounds['flood_warning'] = self.generator.generate_warning(0.3)
             self.sounds['disaster_start'] = self.generator.generate_explosion(0.5, 0.25)
             self.sounds['chaos_rising'] = self.generator.generate_sweep(200, 100, 0.5, 'sawtooth', 0.2)
-            
+
             # Game state sounds
             self.sounds['game_start'] = self.generator.generate_sweep(200, 800, 0.5, 'square', 0.3)
             self.sounds['game_over'] = self.generator.generate_game_over(0.3)
             self.sounds['pause'] = self.generator.generate_tone(440, 0.2, 'square', 0.25)
             self.sounds['menu_select'] = self.generator.generate_tone(600, 0.1, 'square', 0.25)
             self.sounds['menu_move'] = self.generator.generate_tone(400, 0.05, 'square', 0.2)
-            
-            print(f"Generated {len(self.sounds)} sound effects!")
-            
+
+            print(f"✓ Generated {len(self.sounds)} sound effects!")
+
         except Exception as e:
-            print(f"Error generating sounds: {e}")
-            self.enabled = False
+            print(f"⚠ Error generating sounds: {e}")
+            import traceback
+            traceback.print_exc()
+            # Don't disable audio - might work after unlock
+            # self.enabled = False
             
     def play_sfx(self, sound_name: str, volume: Optional[float] = None):
         """Play a sound effect.
@@ -151,23 +159,36 @@ class SoundManager:
         Returns True if audio is working, False otherwise.
         """
         if not self.enabled:
-            print("Attempting to unlock audio after user interaction...")
+            print("🔊 Attempting to unlock audio after user interaction...")
             try:
-                # Try to reinitialize
+                # Try to reinitialize if needed
                 if not pygame.mixer.get_init():
-                    pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+                    print("  Reinitializing mixer...")
+                    pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=1024)
+                    self._generate_sounds()
+
+                # If we have no sounds, try to generate them
+                if len(self.sounds) == 0:
+                    print("  Generating sounds...")
                     self._generate_sounds()
 
                 # Test with a very quiet sound
-                if 'menu_select' in self.sounds:
-                    test = self.sounds['menu_select']
-                    test.set_volume(0.01)
+                if len(self.sounds) > 0:
+                    # Use any available sound for testing
+                    test_sound_name = list(self.sounds.keys())[0]
+                    test = self.sounds[test_sound_name]
+                    test.set_volume(0.01)  # Very quiet
                     test.play()
                     self.enabled = True
-                    print("✓ Audio unlocked successfully!")
+                    print(f"✓ Audio unlocked successfully! ({len(self.sounds)} sounds loaded)")
                     return True
+                else:
+                    print("✗ No sounds available to test with")
+
             except Exception as e:
-                print(f"Audio unlock failed: {e}")
+                print(f"⚠ Audio unlock failed: {e}")
+                import traceback
+                traceback.print_exc()
                 self.enabled = False
 
         return self.enabled
