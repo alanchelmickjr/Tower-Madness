@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pip3 install pygbag && python3 -m pygbag --build main_web.py",
+  "buildCommand": "pip3 install pygbag && python3 -m pygbag --build --template index.html main_web.py",
   "outputDirectory": "build/web",
   "installCommand": "echo 'Using Python build'",
   "framework": null,
