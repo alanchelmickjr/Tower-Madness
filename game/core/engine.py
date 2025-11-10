@@ -89,27 +89,57 @@ class GameEngine:
             
     def draw(self):
         """Draw the current game state."""
-        self.screen.fill(BLACK)
-        
-        if self.state == STATE_MENU:
-            self._draw_menu()
-        elif self.state == STATE_PLAYING:
-            if self.elevator_scene:
-                self.elevator_scene.draw(self.screen)
-        elif self.state == STATE_PAUSED:
-            self._draw_paused()
-        elif self.state == STATE_GAME_OVER:
-            self._draw_game_over()
-        elif self.state == STATE_NAME_ENTRY:
-            self._draw_name_entry()
+        try:
+            self.screen.fill(BLACK)
+
+            if self.state == STATE_MENU:
+                self._draw_menu()
+            elif self.state == STATE_PLAYING:
+                if self.elevator_scene:
+                    self.elevator_scene.draw(self.screen)
+            elif self.state == STATE_PAUSED:
+                self._draw_paused()
+            elif self.state == STATE_GAME_OVER:
+                self._draw_game_over()
+            elif self.state == STATE_NAME_ENTRY:
+                self._draw_name_entry()
+
+        except Exception as e:
+            # Emergency error display
+            print(f"ERROR in GameEngine.draw() [state={self.state}]: {e}")
+            import traceback
+            traceback.print_exc()
+
+            # Draw error message
+            self.screen.fill((20, 0, 0))
+            font = pygame.font.Font(None, 36)
+            error_text = font.render(f"ENGINE ERROR (state: {self.state})", True, (255, 100, 100))
+            error_rect = error_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 30))
+            self.screen.blit(error_text, error_rect)
+
+            small_font = pygame.font.Font(None, 24)
+            msg = small_font.render(str(e)[:70], True, (255, 200, 200))
+            msg_rect = msg.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 10))
+            self.screen.blit(msg, msg_rect)
             
     def _update_menu(self, dt, events):
         """Update menu state."""
         self.title_pulse += dt * 2
         self.shaft_animation += dt * 50
-        
+
         for event in events:
+            # Try to unlock audio on any mouse click (for web browsers)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if not self.sound_manager.is_enabled():
+                    print("Mouse click detected - attempting to unlock audio...")
+                    self.sound_manager.try_unlock_audio()
+
             if event.type == pygame.KEYDOWN:
+                # Try to unlock audio on keypress too
+                if not self.sound_manager.is_enabled():
+                    print("Key press detected - attempting to unlock audio...")
+                    self.sound_manager.try_unlock_audio()
+
                 if event.key == pygame.K_SPACE or event.key == ARCADE_BUTTON_1:
                     self.sound_manager.play_sfx('menu_select')
                     self._start_game(1)
@@ -123,13 +153,13 @@ class GameEngine:
         """Draw the main menu with leaderboard display."""
         # Draw elevator shaft background
         self._draw_elevator_shaft_background()
-        
+
         # Draw semi-transparent overlay
         overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
         overlay.set_alpha(180)
         overlay.fill(BLACK)
         self.screen.blit(overlay, (0, 0))
-        
+
         # Draw title with pulsing effect
         pulse = abs(pygame.math.Vector2(1, 0).rotate(self.title_pulse * 100).x)
         title_color = (
@@ -137,29 +167,39 @@ class GameEngine:
             int(100 + 155 * pulse),
             int(100 + 155 * pulse)
         )
-        
+
         title_text = self.font_title.render("TOWER MADNESS", True, title_color)
         title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, 80))
         self.screen.blit(title_text, title_rect)
-        
+
         # Draw subtitle
         subtitle_text = self.font_large.render("Elevator Operator", True, CYAN)
         subtitle_rect = subtitle_text.get_rect(center=(SCREEN_WIDTH // 2, 150))
         self.screen.blit(subtitle_text, subtitle_rect)
-        
+
+        # Draw audio status indicator
+        if not self.sound_manager.is_enabled():
+            audio_warning = self.font_small.render("⚠ Audio Disabled - Click to enable sound", True, (255, 200, 0))
+            audio_rect = audio_warning.get_rect(center=(SCREEN_WIDTH // 2, 190))
+            self.screen.blit(audio_warning, audio_rect)
+        else:
+            audio_ok = self.font_small.render("♪ Audio Enabled", True, (100, 255, 100))
+            audio_rect = audio_ok.get_rect(center=(SCREEN_WIDTH // 2, 190))
+            self.screen.blit(audio_ok, audio_rect)
+
         # Draw leaderboards side by side
         self._draw_leaderboards()
-        
+
         # Draw start instructions
         start_text = self.font_large.render("Press SPACE to Start", True, WHITE)
         start_rect = start_text.get_rect(center=(SCREEN_WIDTH // 2, 650))
         self.screen.blit(start_text, start_rect)
-        
+
         # Draw 2-player option
         two_player_text = self.font_medium.render("Press 2 for Two Players", True, YELLOW)
         two_player_rect = two_player_text.get_rect(center=(SCREEN_WIDTH // 2, 690))
         self.screen.blit(two_player_text, two_player_rect)
-        
+
         # Draw arcade ready text
         arcade_text = self.font_small.render("SF Tech Week Algorave - Arcade Cabinet Ready", True, MAGENTA)
         arcade_rect = arcade_text.get_rect(center=(SCREEN_WIDTH // 2, 730))

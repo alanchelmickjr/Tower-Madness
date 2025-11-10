@@ -45,10 +45,30 @@ class SoundManager:
         # Initialize pygame mixer if not already done
         try:
             if not pygame.mixer.get_init():
+                print("Initializing pygame.mixer for web audio...")
                 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+                print(f"Audio initialized: {pygame.mixer.get_init()}")
+            else:
+                print(f"Audio already initialized: {pygame.mixer.get_init()}")
+
+            # Generate sounds
             self._generate_sounds()
+
+            # Test audio by attempting to create a test sound
+            print("Testing audio playback capability...")
+            test_sound = self.generator.generate_tone(440, 0.01, 'sine', 0.1)
+            if test_sound:
+                print("✓ Audio test sound created successfully")
+            else:
+                print("✗ Failed to create test sound")
+                self.enabled = False
+
         except Exception as e:
-            print(f"Warning: Could not initialize audio: {e}")
+            print(f"✗ ERROR: Could not initialize audio: {e}")
+            print("  Audio will be disabled. This is common in web browsers.")
+            print("  The game will continue without sound.")
+            import traceback
+            traceback.print_exc()
             self.enabled = False
             
     def _generate_sounds(self):
@@ -100,18 +120,18 @@ class SoundManager:
             
     def play_sfx(self, sound_name: str, volume: Optional[float] = None):
         """Play a sound effect.
-        
+
         Args:
             sound_name: Name of the sound to play
             volume: Optional volume override (0.0 to 1.0)
         """
         if not self.enabled or not self.sfx_enabled:
             return
-            
+
         if sound_name not in self.sounds:
             print(f"Warning: Sound '{sound_name}' not found")
             return
-            
+
         try:
             sound = self.sounds[sound_name]
             if volume is not None:
@@ -121,6 +141,36 @@ class SoundManager:
             sound.play()
         except Exception as e:
             print(f"Error playing sound '{sound_name}': {e}")
+            # Don't disable audio entirely on playback errors
+            # The user might have muted or there might be a temporary issue
+
+    def try_unlock_audio(self):
+        """Attempt to unlock Web Audio API (requires user interaction).
+
+        This should be called after a user click/touch event in web browsers.
+        Returns True if audio is working, False otherwise.
+        """
+        if not self.enabled:
+            print("Attempting to unlock audio after user interaction...")
+            try:
+                # Try to reinitialize
+                if not pygame.mixer.get_init():
+                    pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+                    self._generate_sounds()
+
+                # Test with a very quiet sound
+                if 'menu_select' in self.sounds:
+                    test = self.sounds['menu_select']
+                    test.set_volume(0.01)
+                    test.play()
+                    self.enabled = True
+                    print("✓ Audio unlocked successfully!")
+                    return True
+            except Exception as e:
+                print(f"Audio unlock failed: {e}")
+                self.enabled = False
+
+        return self.enabled
             
     def play_music(self, track_name: str, loop: bool = True, fade_ms: int = 1000):
         """Play background music.
