@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+*.egg
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# Game assets (only include in build output)
+*.wav
+*.mp3
+*.ogg
+
+# Development
+.git/
+.gitignore
+*.md
+!README.md
+
+# Build artifacts (will be rebuilt)
+build/
+web_build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
