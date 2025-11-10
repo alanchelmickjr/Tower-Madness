@@ -150,35 +150,30 @@
         </div>
     </div>
     
+    <script src="https://pygame-web.github.io/archives/0.9/pythons.js" async defer></script>
+    <script type="application/python" src="main.py" async defer></script>
+
     <script type="module">
-        async function loadGame() {
-            const loadingDiv = document.getElementById('loading');
-            const errorDiv = document.getElementById('error-message');
-            const canvas = document.getElementById('pygame-canvas');
-            
-            try {
-                // Load Pygbag/Pyodide
-                loadingDiv.textContent = '📦 Loading Python environment...';
-                
-                // Auto-focus and update instructions when canvas appears
-                const observer = new MutationObserver(() => {
-                    if (canvas && canvas.width > 0) {
-                        canvas.focus();
-                        canvas.setAttribute('tabindex', '0');
-                        canvas.style.outline = '3px solid #0ff';
-                        canvas.style.cursor = 'pointer';
-                        loadingDiv.innerHTML = `
-                            <h2 style="color: #0ff;">✅ Game Loaded!</h2>
-                            <p style="font-size: 24px; color: #fff;">👇 <strong>CLICK the game below</strong> 👇</p>
-                            <p style="font-size: 20px; color: #0ff;">Then press <strong>SPACEBAR</strong> to start!</p>
-                        `;
-                        console.log('Canvas ready - click it and press SPACEBAR');
-                    }
-                });
-                
-                observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] });
-                
-                // Click handler with visual feedback
+        // Update loading message when game initializes
+        const loadingDiv = document.getElementById('loading');
+        const canvas = document.getElementById('pygame-canvas');
+
+        // Monitor for canvas ready state
+        const checkCanvas = setInterval(() => {
+            if (canvas && canvas.width > 0) {
+                clearInterval(checkCanvas);
+                canvas.focus();
+                canvas.setAttribute('tabindex', '0');
+                canvas.style.outline = '3px solid #0ff';
+                canvas.style.cursor = 'pointer';
+
+                loadingDiv.innerHTML = `
+                    <h2 style="color: #0ff;">✅ Game Loaded!</h2>
+                    <p style="font-size: 24px; color: #fff;">👇 <strong>CLICK the game below</strong> 👇</p>
+                    <p style="font-size: 20px; color: #0ff;">Then press <strong>SPACEBAR</strong> to start!</p>
+                `;
+
+                // Add click handler for focus with feedback
                 canvas.addEventListener('click', () => {
                     canvas.focus();
                     canvas.style.outline = '5px solid #0f0';
@@ -186,42 +181,36 @@
                         <h2 style="color: #0f0;">✅ Canvas Focused!</h2>
                         <p style="font-size: 24px; color: #fff;">Now press <strong>SPACEBAR</strong> to start!</p>
                     `;
-                    console.log('Canvas focused - press SPACEBAR now');
-                    
-                    // Reset outline after a moment
                     setTimeout(() => {
                         canvas.style.outline = '3px solid #0ff';
                     }, 1000);
                 });
-                
-                // Keyboard event logging
+
+                // Add keyboard event feedback
                 canvas.addEventListener('keydown', (e) => {
-                    console.log('Key pressed:', e.key, e.code);
                     if (e.key === ' ' || e.code === 'Space') {
                         loadingDiv.innerHTML = `
                             <h2 style="color: #0f0;">🎮 Game Starting!</h2>
                         `;
                     }
                 });
-                
-            } catch (error) {
-                console.error('Error loading game:', error);
+            }
+        }, 100);
+
+        // Timeout after 30 seconds
+        setTimeout(() => {
+            if (canvas.width === 0) {
+                clearInterval(checkCanvas);
+                const errorDiv = document.getElementById('error-message');
                 errorDiv.style.display = 'block';
                 errorDiv.innerHTML = `
-                    <h3>❌ Error Loading Game</h3>
-                    <p>${error.message}</p>
-                    <p>Please try refreshing the page or check the browser console for more details.</p>
+                    <h3>⚠️ Game Loading Issue</h3>
+                    <p>The game is taking longer than expected to load.</p>
+                    <p>Try refreshing the page. If the issue persists, check your browser console (F12) for errors.</p>
                 `;
                 loadingDiv.style.display = 'none';
             }
-        }
-        
-        // Start loading when page is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadGame);
-        } else {
-            loadGame();
-        }
+        }, 30000);
     </script>
 </body>
 </html>
