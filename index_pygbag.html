@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Madness - Elevator Operator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            max-width: 90%;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0 0 10px 0;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
+            to { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00; }
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #00ccff;
+            margin-bottom: 20px;
+        }
+
+        #canvas {
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ccff;
+            border-radius: 5px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .controls h3 {
+            color: #00ccff;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .controls p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            font-size: 1.5em;
+            color: #00ff00;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 100, 0, 0.3);
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>🏢 TOWER MADNESS 🏢</h1>
+        <div class="subtitle">Elevator Operator</div>
+
+        <div class="status">
+            <div class="loading" id="status">⚡ Loading game engine...</div>
+        </div>
+
+        <canvas id="canvas" width="800" height="600"></canvas>
+
+        <div class="controls">
+            <h3>🎮 CONTROLS</h3>
+            <p>⬆️  <strong>W / ↑</strong> - Move Elevator UP</p>
+            <p>⬇️  <strong>S / ↓</strong> - Move Elevator DOWN</p>
+            <p>🚪 <strong>E / SPACE</strong> - Open/Close Doors</p>
+            <p></p>
+            <p><strong>🎯 Goal:</strong> Deliver 20 passengers to their floors!</p>
+            <p><strong>⚠️  Watch out for:</strong> Floods, hackathons, and impatient passengers!</p>
+        </div>
+    </div>
+
+    <!-- Pygbag/Pyodide loader -->
+    <script type="module">
+        const statusElement = document.getElementById('status');
+
+        function updateStatus(msg) {
+            console.log(msg);
+            statusElement.textContent = msg;
+        }
+
+        try {
+            updateStatus('🔄 Loading Pyodide...');
+
+            // Load from CDN
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+            script.onload = async function() {
+                try {
+                    updateStatus('🔄 Initializing Python runtime...');
+
+                    let pyodide = await loadPyodide({
+                        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'
+                    });
+
+                    updateStatus('📦 Loading Pygame...');
+                    await pyodide.loadPackage(['pygame', 'micropip']);
+
+                    updateStatus('🎮 Starting Tower Madness...');
+
+                    // Run the game
+                    await pyodide.runPythonAsync(`
+                        import asyncio
+                        import sys
+
+                        # Load the game package
+                        try:
+                            from pyodide.http import pyfetch
+                            response = await pyfetch("tower-madness.apk")
+                            if response.ok:
+                                content = await response.bytes()
+                                print(f"Loaded game package: {len(content)} bytes")
+
+                                # The APK is a ZIP file containing the game
+                                import zipfile
+                                import io
+
+                                zip_file = zipfile.ZipFile(io.BytesIO(content))
+
+                                # Extract and import main_web
+                                sys.path.insert(0, '/tmp/game')
+                                zip_file.extractall('/tmp/game')
+
+                                print("Game files extracted, starting game...")
+                                import main_web
+                                await main_web.main()
+                            else:
+                                print(f"Failed to load game package: {response.status}")
+                        except Exception as e:
+                            print(f"Error loading game: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    `);
+
+                    updateStatus('✅ Game loaded!');
+
+                } catch (error) {
+                    updateStatus('❌ Error: ' + error.message);
+                    console.error('Pyodide error:', error);
+                }
+            };
+
+            script.onerror = function() {
+                updateStatus('❌ Failed to load Pyodide');
+            };
+
+            document.head.appendChild(script);
+
+        } catch (error) {
+            updateStatus('❌ Fatal error: ' + error.message);
+            console.error('Fatal error:', error);
+        }
+    </script>
+</body>
+</html>

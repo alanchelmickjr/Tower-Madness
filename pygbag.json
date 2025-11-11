@@ -1,0 +1,51 @@
+{
+  "build": {
+    "app_name": "tower-madness",
+    "package": "com.towermadness.game",
+    "title": "Tower Madness - Elevator Operator",
+    "icon": "favicon.png",
+    "width": 800,
+    "height": 600,
+    "orientation": "landscape",
+    "version": "1.0.0"
+  },
+  "metadata": {
+    "description": "Tower Madness - Elevator Operator Game",
+    "author": "Tower Madness Team"
+  },
+  "packaging": {
+    "include": [
+      "main_web.py",
+      "game/**/*.py",
+      "config.py"
+    ],
+    "exclude": [
+      "**/__pycache__/**",
+      "**/*.pyc",
+      "**/*.pyo",
+      "**/test_*.py",
+      "**/tests/**",
+      "*.md",
+      "*.txt",
+      "docs/**",
+      "screenshots/**",
+      ".git/**",
+      ".github/**",
+      "build/**",
+      "web_build/**",
+      "*.sh",
+      "*.html",
+      "*.json",
+      "*.toml",
+      "*.nix",
+      ".replit",
+      ".env*",
+      "deploy.sh",
+      "build_web.py",
+      "main.py",
+      "vercel.json",
+      "netlify.toml",
+      "package.json"
+    ]
+  }
+}
