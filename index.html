@@ -152,50 +152,20 @@
     
     <!-- Pygbag loader script -->
     <script src="https://pygame-web.github.io/archives/0.9/pythons.js" type="module" async defer></script>
-
-    <script type="module">
-        async function loadGame() {
-            const loadingDiv = document.getElementById('loading');
-            const errorDiv = document.getElementById('error-message');
-            const canvas = document.getElementById('canvas');
-
-            try {
-                // Load Pygbag/Pyodide
-                loadingDiv.innerHTML = '📦 Loading Python environment...<br><small style="color: #888;">This may take 10-20 seconds on first load</small>';
-                console.log('🎮 Tower Madness - Starting initialization...');
-
-                // Auto-focus and update instructions when canvas appears
-                const observer = new MutationObserver(() => {
-                    if (canvas && canvas.width > 0) {
-                        console.log('✅ Canvas initialized with dimensions:', canvas.width, 'x', canvas.height);
-                        canvas.focus();
-                        canvas.setAttribute('tabindex', '0');
-                        canvas.style.outline = '3px solid #0ff';
-                        canvas.style.cursor = 'pointer';
-                        loadingDiv.innerHTML = `
-                            <h2 style="color: #0ff;">✅ Game Loaded!</h2>
-                            <p style="font-size: 24px; color: #fff;">👇 <strong>CLICK the game below</strong> 👇</p>
-                            <p style="font-size: 20px; color: #0ff;">Then press <strong>SPACEBAR</strong> to start!</p>
-                        `;
-                        console.log('Canvas ready - click it and press SPACEBAR');
-                    }
-                });
-
-                observer.observe(canvas, { attributes: true, attributeFilter: ['width', 'height'] });
-
-                // Click handler with visual feedback
-    <script src="https://pygame-web.github.io/archives/0.9/pythons.js" async defer></script>
     <script type="application/python" src="main.py" async defer></script>
 
     <script type="module">
-        // Update loading message when game initializes
         const loadingDiv = document.getElementById('loading');
-        const canvas = document.getElementById('pygame-canvas');
+        const errorDiv = document.getElementById('error-message');
+        const canvas = document.getElementById('canvas');
+
+        console.log('🎮 Tower Madness - Starting initialization...');
 
         // Monitor for canvas ready state
         const checkCanvas = setInterval(() => {
             if (canvas && canvas.width > 0) {
                 clearInterval(checkCanvas);
+                console.log('✅ Canvas initialized with dimensions:', canvas.width, 'x', canvas.height);
                 canvas.focus();
                 canvas.setAttribute('tabindex', '0');
                 canvas.style.outline = '3px solid #0ff';
@@ -237,7 +207,6 @@
                     }, 1000);
                 });
 
-                // Keyboard event logging
                 // Add keyboard event feedback
                 canvas.addEventListener('keydown', (e) => {
                     if (e.key === ' ' || e.code === 'Space') {
@@ -246,30 +215,26 @@
                         `;
                     }
                 });
-
-                // Monitor for Python errors
-                window.addEventListener('error', (e) => {
-                    console.error('Error detected:', e.message);
-                    if (e.message.includes('Python')) {
-                        errorDiv.style.display = 'block';
-                        errorDiv.innerHTML = `
-                            <h3>❌ Python Error</h3>
-                            <p>${e.message}</p>
-                            <p>Please try refreshing the page.</p>
-                        `;
-                    }
-                });
-
-            } catch (error) {
-                console.error('Error loading game:', error);
             }
         }, 100);
 
+        // Monitor for Python errors
+        window.addEventListener('error', (e) => {
+            console.error('Error detected:', e.message);
+            if (e.message.includes('Python')) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = `
+                    <h3>❌ Python Error</h3>
+                    <p>${e.message}</p>
+                    <p>Please try refreshing the page.</p>
+                `;
+            }
+        });
+
         // Timeout after 30 seconds
         setTimeout(() => {
-            if (canvas.width === 0) {
+            if (canvas && canvas.width === 0) {
                 clearInterval(checkCanvas);
-                const errorDiv = document.getElementById('error-message');
                 errorDiv.style.display = 'block';
                 errorDiv.innerHTML = `
                     <h3>⚠️ Game Loading Issue</h3>
@@ -278,14 +243,6 @@
                 `;
                 loadingDiv.style.display = 'none';
             }
-        }
-
-        // Start loading when page is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadGame);
-        } else {
-            loadGame();
-        }
         }, 30000);
     </script>
 </body>

@@ -107,7 +107,7 @@ class ElevatorScene:
         self.timer = 0
         
         # Debug disaster buttons (for demo/testing)
-        self.debug_mode = True  # Enable for demos
+        self.debug_mode = False  # Disabled for production
         self.flood_button = pygame.Rect(SCREEN_WIDTH - 220, 15, 90, 30)
         self.hackathon_button = pygame.Rect(SCREEN_WIDTH - 120, 15, 90, 30)
         self.power_outage_button = pygame.Rect(SCREEN_WIDTH - 320, 15, 90, 30)

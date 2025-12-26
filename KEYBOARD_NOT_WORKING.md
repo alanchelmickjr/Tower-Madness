@@ -77,7 +77,7 @@ If the desktop version works but web doesn't, it's a browser/keyboard focus issu
 2. **Click the game canvas**
 3. **Type this in console:**
    ```javascript
-   document.getElementById('pygame-canvas').focus();
+   document.getElementById('canvas').focus();
    ```
 4. **Press ENTER**
 5. **Now try pressing SPACEBAR in the game**
@@ -90,7 +90,7 @@ If this works, it's definitely a focus issue. The updated `index.html` should fi
 
 **Check if canvas exists:**
 ```javascript
-console.log(document.getElementById('pygame-canvas'));
+console.log(document.getElementById('canvas'));
 ```
 
 **Check if Pygbag loaded:**
@@ -100,7 +100,7 @@ console.log(window.pyodide);
 
 **Force focus on canvas:**
 ```javascript
-const canvas = document.getElementById('pygame-canvas');
+const canvas = document.getElementById('canvas');
 canvas.setAttribute('tabindex', '0');
 canvas.focus();
 canvas.addEventListener('keydown', (e) => console.log('Key:', e.key));
@@ -140,11 +140,11 @@ If nothing works, create a simple test file:
 <html>
 <body>
 <h1>Keyboard Test</h1>
-<canvas id="pygame-canvas" tabindex="0" width="1024" height="768" 
+<canvas id="canvas" tabindex="0" width="1024" height="768"
         style="border: 3px solid cyan;">
 </canvas>
 <script>
-const canvas = document.getElementById('pygame-canvas');
+const canvas = document.getElementById('canvas');
 canvas.addEventListener('keydown', (e) => {
     console.log('Key pressed:', e.key);
     alert('Key works: ' + e.key);
